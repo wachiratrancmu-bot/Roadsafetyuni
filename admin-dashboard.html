@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeRoad TH — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg:      #f1f5f9;
+  --surface: #ffffff;
+  --border:  #e2e8f0;
+  --primary: #1a56db;
+  --danger:  #dc2626;
+  --warning: #d97706;
+  --success: #059669;
+  --text:    #1e293b;
+  --text-2:  #475569;
+  --text-3:  #94a3b8;
+  --near:    #059669;
+  --frequent:#d97706;
+  --accident:#dc2626;
+  --font:    'Noto Sans Thai', sans-serif;
+  --mono:    'JetBrains Mono', monospace;
+  --shadow:  0 1px 8px rgba(0,0,0,0.08);
+  --radius:  10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
+
+/* SIDEBAR */
+.sidebar {
+  width:220px; min-width:220px;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  position:fixed; top:0; left:0; bottom:0; z-index:100;
+}
+.sb-logo {
+  padding:18px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+  font-size:15px; font-weight:700; color:var(--primary);
+}
+.sb-logo-badge {
+  background:var(--primary); color:#fff;
+  width:30px; height:30px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+}
+.sb-label {
+  padding:16px 20px 6px;
+  font-size:10px; font-weight:700;
+  color:var(--text-3); text-transform:uppercase; letter-spacing:0.8px;
+}
+.sb-link {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 20px;
+  color:var(--text-2); text-decoration:none;
+  font-size:14px; font-weight:500;
+  border-radius:0; cursor:pointer;
+  transition:all 0.15s; border:none; background:none;
+  width:100%; font-family:var(--font);
+}
+.sb-link:hover { background:var(--bg); color:var(--text); }
+.sb-link.active { background:#eff6ff; color:var(--primary); font-weight:600; }
+.sb-icon { font-size:16px; }
+.sb-bottom {
+  margin-top:auto; padding:16px 20px;
+  border-top:1px solid var(--border);
+  font-size:11px; color:var(--text-3); line-height:1.6;
+}
+.status-dot {
+  display:inline-block; width:8px; height:8px;
+  border-radius:50%; background:var(--success);
+  animation:pulse 2s infinite; margin-right:4px;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* MAIN CONTENT */
+.main { margin-left:220px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+/* TOPBAR */
+.topbar {
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  height:56px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:50;
+  box-shadow:var(--shadow);
+}
+.topbar-title { font-size:15px; font-weight:700; }
+.topbar-right { display:flex; gap:10px; align-items:center; }
+.btn {
+  padding:8px 16px;
+  border-radius:8px; border:none;
+  font-family:var(--font); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all 0.15s;
+  display:flex; align-items:center; gap:6px;
+}
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:#1d4ed8; }
+.btn-outline { background:none; border:1.5px solid var(--border); color:var(--text-2); }
+.btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+.btn-success { background:var(--success); color:#fff; }
+.btn-danger  { background:var(--danger);  color:#fff; }
+
+/* CONFIG BANNER */
+.config-banner {
+  background:#fffbeb;
+  border:1.5px solid #fcd34d;
+  border-radius:var(--radius);
+  padding:12px 16px;
+  margin:20px 24px 0;
+  display:flex; align-items:center; gap:10px;
+  font-size:13px; color:#92400e;
+}
+.config-banner input {
+  flex:1; padding:6px 10px;
+  border:1.5px solid #fcd34d; border-radius:6px;
+  font-family:var(--mono); font-size:12px; background:#fff;
+  outline:none;
+}
+.config-banner input:focus { border-color:var(--primary); }
+
+/* PAGES */
+.page { display:none; padding:24px; }
+.page.active { display:block; }
+
+/* STAT CARDS */
+.stat-grid {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:16px; margin-bottom:24px;
+}
+.stat-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  box-shadow:var(--shadow);
+  position:relative; overflow:hidden;
+}
+.stat-card::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
+  background:var(--accent,var(--primary));
+}
+.stat-label { font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px; }
+.stat-num { font-size:28px; font-weight:700; font-family:var(--mono); color:var(--text); }
+.stat-sub { font-size:12px; color:var(--text-3); margin-top:4px; }
+.stat-icon { position:absolute; right:16px; top:50%; transform:translateY(-50%); font-size:28px; opacity:0.15; }
+
+/* TABLE */
+.table-wrap {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden; box-shadow:var(--shadow);
+}
+.table-header {
+  padding:14px 20px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.table-title { font-size:14px; font-weight:700; }
+.table-filters { display:flex; gap:8px; }
+.filter-sel {
+  padding:6px 10px;
+  border:1.5px solid var(--border);
+  border-radius:6px; background:var(--bg);
+  font-family:var(--font); font-size:13px; color:var(--text);
+  outline:none;
+}
+.filter-sel:focus { border-color:var(--primary); }
+.search-inp {
+  padding:6px 12px;
+  border:1.5px solid var(--border);
+  border-radius:6px; background:var(--bg);
+  font-family:var(--font); font-size:13px;
+  outline:none; width:180px;
+}
+.search-inp:focus { border-color:var(--primary); }
+
+table { width:100%; border-collapse:collapse; }
+th {
+  background:var(--bg); padding:10px 16px;
+  text-align:left; font-size:11px; font-weight:700;
+  color:var(--text-3); text-transform:uppercase; letter-spacing:0.6px;
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+td {
+  padding:12px 16px;
+  font-size:13px; color:var(--text-2);
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#f8fafc; }
+.td-main { color:var(--text); font-weight:500; max-width:200px; }
+
+.sev-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:100px;
+  font-size:11px; font-weight:700; white-space:nowrap;
+}
+.sev-badge.near     { background:#d1fae5; color:var(--near);     }
+.sev-badge.frequent { background:#fef3c7; color:var(--frequent); }
+.sev-badge.accident { background:#fee2e2; color:var(--accident); }
+
+.status-badge {
+  display:inline-block;
+  padding:3px 10px; border-radius:100px;
+  font-size:11px; font-weight:700;
+}
+.status-badge.pending  { background:#f1f5f9; color:var(--text-3); }
+.status-badge.verified { background:#dbeafe; color:var(--primary); }
+.status-badge.resolved { background:#d1fae5; color:var(--near); }
+.status-badge.rejected { background:#fee2e2; color:var(--danger); }
+
+.action-row { display:flex; gap:6px; }
+.act-btn {
+  padding:4px 10px; border-radius:6px; border:none;
+  font-size:11px; font-weight:600; cursor:pointer;
+  font-family:var(--font); transition:all 0.15s;
+}
+.act-btn.verify  { background:#dbeafe; color:var(--primary); }
+.act-btn.resolve { background:#d1fae5; color:var(--near); }
+.act-btn.reject  { background:#fee2e2; color:var(--danger); }
+.act-btn:hover   { filter:brightness(0.9); }
+
+/* MAP */
+#admin-map { height:400px; border-radius:var(--radius); margin-bottom:20px; border:1px solid var(--border); }
+
+/* HEAT INDICATOR */
+.heat-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+}
+.heat-bar-wrap {
+  flex:1; height:8px; background:var(--bg); border-radius:4px; overflow:hidden;
+}
+.heat-bar { height:100%; border-radius:4px; transition:width 0.5s; }
+.heat-name { width:120px; font-size:13px; font-weight:600; }
+.heat-count { width:36px; text-align:right; font-family:var(--mono); font-size:13px; font-weight:700; }
+
+/* USERS TABLE */
+.avatar {
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:13px; color:#fff;
+}
+
+/* MODAL */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.5);
+  display:none; z-index:999; align-items:center; justify-content:center;
+  backdrop-filter:blur(3px);
+}
+.modal-overlay.active { display:flex; }
+.modal {
+  background:var(--surface); border-radius:14px;
+  padding:24px; width:440px; max-width:90vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-title { font-size:16px; font-weight:700; margin-bottom:16px; }
+.modal-field { margin-bottom:12px; }
+.modal-label { font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px; display:block; }
+.modal-val { font-size:14px; color:var(--text); padding:8px 12px; background:var(--bg); border-radius:6px; }
+.modal-textarea {
+  width:100%; padding:10px 12px;
+  border:1.5px solid var(--border); border-radius:6px;
+  font-family:var(--font); font-size:14px; resize:none;
+  height:80px; outline:none;
+}
+.modal-textarea:focus { border-color:var(--primary); }
+.modal-footer { display:flex; gap:8px; margin-top:16px; justify-content:flex-end; }
+
+/* EMPTY */
+.empty { text-align:center; padding:48px; color:var(--text-3); }
+.empty-icon { font-size:40px; opacity:0.3; margin-bottom:12px; }
+
+/* CHART MINI */
+.chart-row {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:16px; margin-bottom:24px;
+}
+.chart-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px; box-shadow:var(--shadow);
+}
+.chart-title { font-size:13px; font-weight:700; margin-bottom:16px; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--text); color:#fff;
+  padding:12px 20px; border-radius:10px;
+  font-size:14px; font-weight:600;
+  z-index:9999; opacity:0;
+  transform:translateY(10px);
+  transition:all 0.3s; pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-badge">⚠</div>
+    <div>SafeRoad<span style="color:var(--text-3)">TH</span><br>
+    <span style="font-size:10px;font-weight:400;color:var(--text-3)">Admin Panel</span></div>
+  </div>
+  <div class="sb-label">ภาพรวม</div>
+  <button class="sb-link active" onclick="showPage('dashboard',this)"><span class="sb-icon">📊</span> Dashboard</button>
+  <button class="sb-link" onclick="showPage('map',this)"><span class="sb-icon">🗺️</span> แผนที่จุดเสี่ยง</button>
+
+  <div class="sb-label">จัดการข้อมูล</div>
+  <button class="sb-link" onclick="showPage('reports',this)"><span class="sb-icon">📋</span> รายงานทั้งหมด</button>
+  <button class="sb-link" onclick="showPage('users',this)"><span class="sb-icon">👥</span> ผู้ใช้งาน</button>
+
+  <div class="sb-label">เครื่องมือ</div>
+  <button class="sb-link" onclick="exportData()"><span class="sb-icon">📥</span> Export CSV</button>
+  <button class="sb-link" onclick="openApp()"><span class="sb-icon">📱</span> เปิด App หลัก</button>
+
+  <div class="sb-bottom">
+    <div><span class="status-dot"></span>ระบบทำงานปกติ</div>
+    <div style="margin-top:4px">SafeRoad TH v2.0</div>
+    <div style="margin-top:2px;font-size:10px">อิง: Domino Theory · 3E · Hiyari Hatto · RSA</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">📊 Dashboard</div>
+    <div class="topbar-right">
+      <button class="btn btn-outline" onclick="loadData()">🔄 รีเฟรช</button>
+      <button class="btn btn-success" onclick="exportData()">📥 Export</button>
+    </div>
+  </div>
+
+  <!-- CONFIG BANNER -->
+  <div class="config-banner" id="config-banner">
+    ⚠️ ใส่ Google Apps Script URL:
+    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec">
+    <button class="btn btn-primary" onclick="saveGASUrl()">บันทึก</button>
+  </div>
+
+  <!-- PAGE: DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="stat-grid" style="margin-top:24px">
+      <div class="stat-card" style="--accent:var(--primary)">
+        <div class="stat-label">รายงานทั้งหมด</div>
+        <div class="stat-num" id="s-total">0</div>
+        <div class="stat-sub">จุดเสี่ยงที่บันทึก</div>
+        <div class="stat-icon">📍</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--accident)">
+        <div class="stat-label">อุบัติเหตุ</div>
+        <div class="stat-num" id="s-accident" style="color:var(--accident)">0</div>
+        <div class="stat-sub">ต้องแก้ไขเร่งด่วน</div>
+        <div class="stat-icon">🔴</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--frequent)">
+        <div class="stat-label">จุด Black Spot</div>
+        <div class="stat-num" id="s-frequent" style="color:var(--frequent)">0</div>
+        <div class="stat-sub">เกิดบ่อย (เฝ้าระวัง)</div>
+        <div class="stat-icon">🟡</div>
+      </div>
+      <div class="stat-card" style="--accent:var(--near)">
+        <div class="stat-label">Hiyari Hatto</div>
+        <div class="stat-num" id="s-near" style="color:var(--near)">0</div>
+        <div class="stat-sub">เกือบเกิด (ป้องกัน)</div>
+        <div class="stat-icon">🟢</div>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <!-- Type breakdown -->
+      <div class="chart-card">
+        <div class="chart-title">📊 ประเภทจุดเสี่ยง</div>
+        <div id="type-chart"></div>
+      </div>
+      <!-- Status breakdown -->
+      <div class="chart-card">
+        <div class="chart-title">✅ สถานะการจัดการ</div>
+        <div id="status-chart"></div>
+      </div>
+    </div>
+
+    <!-- Recent reports -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">รายงานล่าสุด</div>
+        <button class="btn btn-outline" onclick="showPage('reports')">ดูทั้งหมด →</button>
+      </div>
+      <div id="recent-table-body">
+        <div class="empty"><div class="empty-icon">📋</div>กำลังโหลด...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: MAP -->
+  <div class="page" id="page-map">
+    <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <div style="font-size:15px;font-weight:700">🗺️ แผนที่จุดเสี่ยงทั้งหมด</div>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-outline" onclick="filterMap('all')" id="mf-all">ทั้งหมด</button>
+        <button class="btn btn-outline" onclick="filterMap('accident')">🔴 อุบัติเหตุ</button>
+        <button class="btn btn-outline" onclick="filterMap('frequent')">🟡 เกิดบ่อย</button>
+        <button class="btn btn-outline" onclick="filterMap('near')">🟢 Hiyari</button>
+      </div>
+    </div>
+    <div id="admin-map"></div>
+    <div style="font-size:12px;color:var(--text-3);margin-top:8px">คลิกหมุดเพื่อดูรายละเอียด และเปลี่ยนสถานะ</div>
+  </div>
+
+  <!-- PAGE: REPORTS -->
+  <div class="page" id="page-reports">
+    <div class="table-wrap" style="margin-top:4px">
+      <div class="table-header">
+        <div class="table-title">รายงานทั้งหมด (<span id="report-count">0</span>)</div>
+        <div class="table-filters">
+          <input class="search-inp" id="search-inp" placeholder="🔍 ค้นหา..." oninput="renderReportsTable()">
+          <select class="filter-sel" id="filter-sev" onchange="renderReportsTable()">
+            <option value="">ทุกระดับ</option>
+            <option value="accident">🔴 อุบัติเหตุ</option>
+            <option value="frequent">🟡 เกิดบ่อย</option>
+            <option value="near">🟢 Hiyari Hatto</option>
+          </select>
+          <select class="filter-sel" id="filter-status" onchange="renderReportsTable()">
+            <option value="">ทุกสถานะ</option>
+            <option value="pending">รอดำเนินการ</option>
+            <option value="verified">ยืนยันแล้ว</option>
+            <option value="resolved">แก้ไขแล้ว</option>
+            <option value="rejected">ปฏิเสธ</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>วันที่</th>
+              <th>ประเภท</th>
+              <th>ระดับ</th>
+              <th>รายละเอียด</th>
+              <th>ผู้รายงาน</th>
+              <th>โหวต</th>
+              <th>รูป</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="reports-tbody"></tbody>
+        </table>
+        <div class="empty" id="reports-empty" style="display:none">
+          <div class="empty-icon">📋</div>ไม่มีรายงาน
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: USERS -->
+  <div class="page" id="page-users">
+    <div class="table-wrap" style="margin-top:4px">
+      <div class="table-header">
+        <div class="table-title">ผู้ใช้งาน (<span id="user-count">0</span>)</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>ชื่อ</th>
+              <th>บทบาท</th>
+              <th>คะแนน</th>
+              <th>รายงาน</th>
+              <th>ระดับ</th>
+              <th>ล่าสุด</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REPORT DETAIL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">รายละเอียดรายงาน</div>
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">ปิด</button>
+      <button class="btn" id="modal-verify" onclick="doAction('verified')" style="background:#dbeafe;color:var(--primary)">✅ ยืนยัน</button>
+      <button class="btn btn-success" onclick="doAction('resolved')">🔧 แก้ไขแล้ว</button>
+      <button class="btn btn-danger" onclick="doAction('rejected')">❌ ปฏิเสธ</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================
+// CONFIG
+// ============================================
+let GAS_URL = localStorage.getItem('admin_gas_url') || '';
+let allReports = [];
+let allUsers   = [];
+let adminMap   = null;
+let adminMarkers = [];
+let currentReportId = null;
+
+const TYPE_ICON  = { intersection:'🚦', curve:'↩️', pedestrian:'🚶', school:'🏫', road:'🛣️', lighting:'💡', speed:'🏎️', vulnerable:'♿' };
+const TYPE_LABEL = { intersection:'สี่แยก', curve:'โค้งอันตราย', pedestrian:'ทางข้าม', school:'โรงเรียน', road:'ถนนชำรุด', lighting:'ไฟถนน', speed:'ความเร็วสูง', vulnerable:'กลุ่มเปราะบาง' };
+const SEV_COLOR  = { near:'#059669', frequent:'#d97706', accident:'#dc2626' };
+const SEV_LABEL  = { near:'เกือบเกิด', frequent:'เกิดบ่อย', accident:'เกิดแล้ว' };
+const AV_COLORS  = ['#1a56db','#059669','#d97706','#dc2626','#7c3aed','#0891b2'];
+
+// ── INIT ──
+function init() {
+  if (GAS_URL) {
+    document.getElementById('gas-url-input').value = GAS_URL;
+    document.getElementById('config-banner').style.display = 'none';
+  }
+
+  // Load from localStorage (frontend app data)
+  const local = localStorage.getItem('sr_reports');
+  if (local) {
+    allReports = JSON.parse(local);
+    renderDashboard();
+    renderReportsTable();
+  }
+
+  // Try GAS
+  loadData();
+  initAdminMap();
+}
+
+function saveGASUrl() {
+  const url = document.getElementById('gas-url-input').value.trim();
+  if (!url) return toast('⚠️ ใส่ URL ก่อน');
+  GAS_URL = url;
+  localStorage.setItem('admin_gas_url', url);
+  document.getElementById('config-banner').style.display = 'none';
+  loadData();
+  toast('✅ บันทึก URL แล้ว');
+}
+
+async function loadData() {
+  if (!GAS_URL) return;
+  try {
+    const res  = await fetch(`${GAS_URL}?action=getReports`);
+    const json = await res.json();
+    if (json.data) {
+      allReports = json.data;
+      renderDashboard();
+      renderReportsTable();
+      renderAdminMap();
+    }
+
+    const res2  = await fetch(`${GAS_URL}?action=getUsers`);
+    const json2 = await res2.json();
+    if (json2.data) {
+      allUsers = json2.data;
+      renderUsersTable();
+    }
+    toast('✅ โหลดข้อมูลสำเร็จ');
+  } catch(e) {
+    toast('⚠️ ไม่สามารถเชื่อมต่อ Google Sheets');
+  }
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-link').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+
+  const titles = { dashboard:'📊 Dashboard', map:'🗺️ แผนที่จุดเสี่ยง', reports:'📋 รายงานทั้งหมด', users:'👥 ผู้ใช้งาน' };
+  document.getElementById('page-title').textContent = titles[name] || '';
+
+  if (name === 'map') {
+    setTimeout(() => {
+      if (adminMap) adminMap.invalidateSize();
+      renderAdminMap();
+    }, 100);
+  }
+}
+
+// ============================================
+// DASHBOARD
+// ============================================
+function renderDashboard() {
+  const a = allReports.filter(r=>r.sev==='accident').length;
+  const f = allReports.filter(r=>r.sev==='frequent').length;
+  const n = allReports.filter(r=>r.sev==='near').length;
+
+  document.getElementById('s-total').textContent    = allReports.length;
+  document.getElementById('s-accident').textContent = a;
+  document.getElementById('s-frequent').textContent = f;
+  document.getElementById('s-near').textContent     = n;
+
+  // Type chart
+  const types = {};
+  allReports.forEach(r => { types[r.type] = (types[r.type]||0)+1; });
+  const maxT = Math.max(...Object.values(types), 1);
+  document.getElementById('type-chart').innerHTML = Object.entries(types)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([k,v]) => `
+      <div class="heat-row">
+        <div class="heat-name">${TYPE_ICON[k]||'⚠️'} ${TYPE_LABEL[k]||k}</div>
+        <div class="heat-bar-wrap"><div class="heat-bar" style="width:${(v/maxT)*100}%;background:var(--primary)"></div></div>
+        <div class="heat-count">${v}</div>
+      </div>`).join('') || '<div style="padding:16px;color:var(--text-3);font-size:13px">ยังไม่มีข้อมูล</div>';
+
+  // Status chart
+  const statuses = { pending:0, verified:0, resolved:0, rejected:0 };
+  allReports.forEach(r => { if(statuses[r.status]!==undefined) statuses[r.status]++; });
+  const total2 = allReports.length || 1;
+  const labels = { pending:'รอดำเนินการ', verified:'ยืนยันแล้ว', resolved:'แก้ไขแล้ว', rejected:'ปฏิเสธ' };
+  const colors = { pending:'#94a3b8', verified:'#1a56db', resolved:'#059669', rejected:'#dc2626' };
+  document.getElementById('status-chart').innerHTML = Object.entries(statuses).map(([k,v]) => `
+    <div class="heat-row">
+      <div class="heat-name" style="color:${colors[k]};font-weight:600">${labels[k]}</div>
+      <div class="heat-bar-wrap"><div class="heat-bar" style="width:${(v/total2)*100}%;background:${colors[k]}"></div></div>
+      <div class="heat-count" style="color:${colors[k]}">${v}</div>
+    </div>`).join('');
+
+  // Recent table (last 5)
+  renderRecentTable([...allReports].reverse().slice(0,5));
+}
+
+function renderRecentTable(rows) {
+  if (rows.length === 0) {
+    document.getElementById('recent-table-body').innerHTML =
+      '<div class="empty"><div class="empty-icon">📋</div>ยังไม่มีรายงาน</div>';
+    return;
+  }
+  document.getElementById('recent-table-body').innerHTML = `
+    <table><thead><tr>
+      <th>วันที่</th><th>ประเภท</th><th>ระดับ</th><th>ผู้รายงาน</th><th>สถานะ</th><th></th>
+    </tr></thead><tbody>
+    ${rows.map(r => `
+      <tr>
+        <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${r.createdAt||'—'}</td>
+        <td class="td-main">${TYPE_ICON[r.type]||'⚠️'} ${TYPE_LABEL[r.type]||r.type}</td>
+        <td><span class="sev-badge ${r.sev}">${SEV_LABEL[r.sev]||r.sev}</span></td>
+        <td>${r.reporter||'ไม่ระบุ'}</td>
+        <td><span class="status-badge ${r.status||'pending'}">${{pending:'รอ',verified:'ยืนยัน',resolved:'แก้แล้ว',rejected:'ปฏิเสธ'}[r.status]||'รอ'}</span></td>
+        <td><button class="act-btn verify" onclick="openModal('${r.id}')">ดู</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ============================================
+// REPORTS TABLE
+// ============================================
+function renderReportsTable() {
+  const q    = (document.getElementById('search-inp')?.value||'').toLowerCase();
+  const sev  = document.getElementById('filter-sev')?.value || '';
+  const stat = document.getElementById('filter-status')?.value || '';
+
+  let rows = allReports.filter(r => {
+    const match = !q || (r.desc||'').toLowerCase().includes(q) || (r.reporter||'').toLowerCase().includes(q);
+    const sevOk  = !sev  || r.sev    === sev;
+    const statOk = !stat || r.status === stat;
+    return match && sevOk && statOk;
+  });
+
+  document.getElementById('report-count').textContent = rows.length;
+  const tbody = document.getElementById('reports-tbody');
+  const empty = document.getElementById('reports-empty');
+
+  if (rows.length === 0) {
+    tbody.innerHTML = ''; empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = [...rows].reverse().map((r, i) => `
+    <tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text-3)">${rows.length-i}</td>
+      <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${(r.createdAt||r.timestamp||'—').substring(0,16)}</td>
+      <td class="td-main">${TYPE_ICON[r.type]||'⚠️'} ${TYPE_LABEL[r.type]||r.type}</td>
+      <td><span class="sev-badge ${r.sev}">${SEV_LABEL[r.sev]||r.sev}</span></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.desc||'—'}</td>
+      <td>${r.reporter||'ไม่ระบุ'}<br><span style="font-size:11px;color:var(--text-3)">${r.role||''}</span></td>
+      <td style="text-align:center;font-weight:700">${r.votes||0}</td>
+      <td style="text-align:center">${r.hasPhoto?'📷':'—'}</td>
+      <td><span class="status-badge ${r.status||'pending'}">${{pending:'รอ',verified:'ยืนยัน',resolved:'แก้แล้ว',rejected:'ปฏิเสธ'}[r.status]||'รอ'}</span></td>
+      <td>
+        <div class="action-row">
+          <button class="act-btn verify"  onclick="openModal('${r.id}')">ดู</button>
+          <button class="act-btn resolve" onclick="quickUpdate('${r.id}','resolved')">✅</button>
+          <button class="act-btn reject"  onclick="quickUpdate('${r.id}','rejected')">❌</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ============================================
+// USERS TABLE
+// ============================================
+function renderUsersTable() {
+  document.getElementById('user-count').textContent = allUsers.length;
+  const tbody = document.getElementById('users-tbody');
+  if (!allUsers.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-3)">ยังไม่มีผู้ใช้</td></tr>';
+    return;
+  }
+  const sorted = [...allUsers].sort((a,b)=>(b['Points']||b['pts']||0)-(a['Points']||a['pts']||0));
+  tbody.innerHTML = sorted.map((u,i) => {
+    const name  = u['Name'] || u.name || 'ไม่ระบุ';
+    const pts   = u['Points'] || u.pts || 0;
+    const cnt   = u['ReportCount'] || u.reports || 0;
+    const badge = u['BadgeLevel'] || u.badge || '—';
+    const role  = u['Role'] || u.role || '—';
+    const seen  = (u['LastSeen']||'').substring(0,10) || '—';
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="avatar" style="background:${AV_COLORS[i%AV_COLORS.length]}">${name[0].toUpperCase()}</div>
+            <div><div style="font-weight:600">${name}</div></div>
+          </div>
+        </td>
+        <td>${role}</td>
+        <td style="font-family:var(--mono);font-weight:700;color:var(--primary)">${pts}</td>
+        <td style="font-family:var(--mono)">${cnt}</td>
+        <td>${badge}</td>
+        <td style="font-size:12px;color:var(--text-3)">${seen}</td>
+      </tr>`;
+  }).join('');
+}
+
+// ============================================
+// ADMIN MAP
+// ============================================
+function initAdminMap() {
+  adminMap = L.map('admin-map').setView([16.82, 100.26], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap'
+  }).addTo(adminMap);
+}
+
+function renderAdminMap(sevFilter) {
+  if (!adminMap) return;
+  adminMarkers.forEach(m => adminMap.removeLayer(m));
+  adminMarkers = [];
+
+  const rows = sevFilter ? allReports.filter(r=>r.sev===sevFilter) : allReports;
+  rows.forEach(r => {
+    if (!r.lat || !r.lng) return;
+    const clr = SEV_COLOR[r.sev] || '#1a56db';
+    const ico = L.divIcon({
+      className:'',
+      html:`<div style="width:34px;height:34px;background:${clr};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid rgba(255,255,255,0.8);box-shadow:0 2px 8px ${clr}66;display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px">${TYPE_ICON[r.type]||'⚠️'}</span></div>`,
+      iconSize:[34,34], iconAnchor:[17,34]
+    });
+    const m = L.marker([parseFloat(r.lat), parseFloat(r.lng)], {icon:ico}).addTo(adminMap);
+    m.on('click', () => openModal(r.id));
+    adminMarkers.push(m);
+  });
+}
+
+function filterMap(sev) {
+  renderAdminMap(sev === 'all' ? null : sev);
+}
+
+// ============================================
+// MODAL
+// ============================================
+function openModal(id) {
+  const r = allReports.find(x => x.id === id || x.ID === id);
+  if (!r) return;
+  currentReportId = id;
+
+  document.getElementById('modal-title').textContent = `${TYPE_ICON[r.type]||'⚠️'} ${TYPE_LABEL[r.type]||r.type} — ${SEV_LABEL[r.sev]||r.sev}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-field"><div class="modal-label">ระดับ</div>
+      <span class="sev-badge ${r.sev}">${SEV_LABEL[r.sev]||r.sev}</span>
+      <span class="status-badge ${r.status||'pending'}" style="margin-left:8px">${{pending:'รอ',verified:'ยืนยัน',resolved:'แก้แล้ว',rejected:'ปฏิเสธ'}[r.status]||'รอ'}</span>
+    </div>
+    <div class="modal-field"><div class="modal-label">พิกัด</div>
+      <div class="modal-val" style="font-family:var(--mono);font-size:12px">${parseFloat(r.lat).toFixed(6)}, ${parseFloat(r.lng).toFixed(6)}</div>
+    </div>
+    <div class="modal-field"><div class="modal-label">คำอธิบาย</div>
+      <div class="modal-val">${r.desc||'ไม่มีรายละเอียด'}</div>
+    </div>
+    <div class="modal-field" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div class="modal-label">ช่วงเวลา</div><div class="modal-val">${r.time||'ไม่ระบุ'}</div></div>
+      <div><div class="modal-label">อากาศ</div><div class="modal-val">${r.weather||'ไม่ระบุ'}</div></div>
+    </div>
+    <div class="modal-field"><div class="modal-label">ผู้รายงาน</div>
+      <div class="modal-val">${r.reporter||'ไม่ระบุ'} ${r.role?'('+r.role+')':''}</div>
+    </div>
+    <div class="modal-field"><div class="modal-label">รูปภาพ</div>
+      ${r.photoURL ? `<a href="${r.photoURL}" target="_blank" class="btn btn-outline" style="display:inline-flex">🖼️ ดูรูปภาพ</a>` : '<div style="font-size:13px;color:var(--text-3)">ไม่มีรูปภาพ</div>'}
+    </div>
+    <div class="modal-field"><div class="modal-label">หมายเหตุ Admin</div>
+      <textarea class="modal-textarea" id="admin-note" placeholder="ใส่หมายเหตุ เช่น ส่งให้กรมทางหลวงชนบทแล้ว...">${r.adminNote||''}</textarea>
+    </div>`;
+
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+  currentReportId = null;
+}
+
+async function doAction(status) {
+  const id   = currentReportId;
+  const note = document.getElementById('admin-note')?.value || '';
+  if (!id) return;
+
+  // Update locally
+  const r = allReports.find(x => x.id === id || x.ID === id);
+  if (r) { r.status = status; r.adminNote = note; }
+  renderDashboard();
+  renderReportsTable();
+  closeModal();
+  toast(`✅ อัปเดตสถานะเป็น "${status}" แล้ว`);
+
+  // Sync to GAS
+  if (GAS_URL) {
+    try {
+      await fetch(GAS_URL, {
+        method:'POST',
+        body: new URLSearchParams({ action:'updateStatus', id, status, note })
+      });
+    } catch(e) {}
+  }
+
+  // Update local frontend storage
+  const local = JSON.parse(localStorage.getItem('sr_reports') || '[]');
+  const lr = local.find(x => x.id === id);
+  if (lr) { lr.status = status; localStorage.setItem('sr_reports', JSON.stringify(local)); }
+}
+
+async function quickUpdate(id, status) {
+  const r = allReports.find(x => x.id === id || x.ID === id);
+  if (r) r.status = status;
+  renderDashboard(); renderReportsTable();
+  toast(`✅ ${status === 'resolved' ? 'แก้ไขแล้ว' : 'ปฏิเสธแล้ว'}`);
+  if (GAS_URL) {
+    fetch(GAS_URL, { method:'POST', body: new URLSearchParams({ action:'updateStatus', id, status }) }).catch(()=>{});
+  }
+}
+
+// ============================================
+// EXPORT
+// ============================================
+function exportData() {
+  if (GAS_URL) {
+    window.open(`${GAS_URL}?action=export`, '_blank');
+    toast('📥 กำลัง Export...');
+    return;
+  }
+  // fallback: export local as CSV
+  const headers = ['ID','วันที่','Lat','Lng','ประเภท','ระดับ','คำอธิบาย','เวลา','อากาศ','ผู้รายงาน','บทบาท','โหวต','สถานะ'];
+  const rows = allReports.map(r => [
+    r.id, r.createdAt, r.lat, r.lng,
+    TYPE_LABEL[r.type]||r.type, SEV_LABEL[r.sev]||r.sev,
+    r.desc, r.time, r.weather, r.reporter, r.role, r.votes||0, r.status||'pending'
+  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `SafeRoad_Export_${new Date().toISOString().substring(0,10)}.csv`;
+  a.click();
+  toast('📥 Export CSV สำเร็จ');
+}
+
+function openApp() {
+  window.open('saferoad-app.html', '_blank');
+}
+
+// ============================================
+// TOAST
+// ============================================
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+init();
+</script>
+</body>
+</html>

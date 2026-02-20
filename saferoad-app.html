@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>SafeRoad TH — รายงานจุดเสี่ยง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+/* ============================================
+   DESIGN: Clean Academic / Civic Tech
+   Target: University students, mobile-first
+   ============================================ */
+:root {
+  --bg:       #f0f4f8;
+  --surface:  #ffffff;
+  --surface2: #f8fafc;
+  --border:   #e2e8f0;
+  --shadow:   0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.12);
+
+  --primary:  #1a56db;
+  --primary-l:#eff6ff;
+  --danger:   #dc2626;
+  --warning:  #d97706;
+  --success:  #059669;
+
+  --near:     #059669;
+  --frequent: #d97706;
+  --accident: #dc2626;
+
+  --text:     #1e293b;
+  --text-2:   #475569;
+  --text-3:   #94a3b8;
+
+  --font:     'Noto Sans Thai', sans-serif;
+  --mono:     'JetBrains Mono', monospace;
+
+  --radius:   14px;
+  --radius-sm:8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+  z-index: 100;
+  position: relative;
+}
+.logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16px; font-weight: 700; color: var(--primary);
+  letter-spacing: -0.3px;
+}
+.logo-badge {
+  background: var(--primary); color: #fff;
+  width: 28px; height: 28px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+/* ── USER BADGE ── */
+.user-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--primary-l);
+  border: 1px solid #bfdbfe;
+  border-radius: 100px;
+  padding: 4px 10px 4px 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.user-badge:hover { background: #dbeafe; }
+.user-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+}
+.user-pts {
+  font-size: 12px; font-weight: 600; color: var(--primary);
+  font-family: var(--mono);
+}
+.user-badge-icon { font-size: 14px; }
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── MAP ── */
+#map {
+  flex: 1;
+  z-index: 1;
+  position: relative;
+}
+.leaflet-container { font-family: var(--font); }
+
+/* ── BOTTOM NAV (mobile) ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 500;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+}
+.nav-btn {
+  flex: 1; padding: 8px 4px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-3); font-family: var(--font);
+  font-size: 10px; font-weight: 500;
+  transition: all 0.2s; position: relative;
+}
+.nav-btn.active { color: var(--primary); }
+.nav-btn.active .nav-icon { background: var(--primary-l); color: var(--primary); }
+.nav-icon {
+  width: 36px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: all 0.2s;
+}
+.nav-badge {
+  position: absolute; top: 4px; right: calc(50% - 18px + 2px);
+  background: var(--danger); color: #fff;
+  font-size: 9px; font-weight: 700;
+  min-width: 16px; height: 16px;
+  border-radius: 8px; padding: 0 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  border: 2px solid var(--surface);
+}
+
+/* ── PANELS (slide up from bottom) ── */
+.panel-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 800;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+  backdrop-filter: blur(2px);
+}
+.panel-overlay.active { opacity: 1; pointer-events: all; }
+
+.panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  z-index: 900;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  max-height: 92vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+}
+.panel.active { transform: translateY(0); }
+
+.panel-handle {
+  width: 36px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px 10px;
+  flex-shrink: 0;
+}
+.panel-title {
+  font-size: 16px; font-weight: 700; color: var(--text);
+}
+.panel-close {
+  width: 28px; height: 28px;
+  background: var(--surface2);
+  border: none; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; color: var(--text-2);
+}
+.panel-body {
+  flex: 1; overflow-y: auto;
+  padding: 0 20px 120px;
+  -webkit-overflow-scrolling: touch;
+}
+.panel-body::-webkit-scrollbar { display: none; }
+
+/* ── FORM ELEMENTS ── */
+.form-group { margin-bottom: 18px; }
+.form-label {
+  display: block;
+  font-size: 11px; font-weight: 600;
+  color: var(--text-3); text-transform: uppercase;
+  letter-spacing: 0.8px; margin-bottom: 8px;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  font-family: var(--font); font-size: 15px; color: var(--text);
+  outline: none; transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--primary);
+  background: #fff;
+}
+.form-textarea { resize: none; min-height: 90px; line-height: 1.6; }
+
+/* ── GPS BUTTON ── */
+.gps-row {
+  display: flex; gap: 8px; margin-bottom: 18px;
+}
+.gps-btn {
+  flex: 1; padding: 12px;
+  background: var(--primary-l);
+  border: 1.5px solid #bfdbfe;
+  border-radius: var(--radius-sm);
+  color: var(--primary); font-family: var(--font);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; gap: 6px;
+  transition: all 0.2s;
+}
+.gps-btn:active { background: #dbeafe; }
+.gps-btn.loading { opacity: 0.7; pointer-events: none; }
+
+.coord-box {
+  flex: 1; padding: 12px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text-3); line-height: 1.4;
+  display: flex; align-items: center; gap: 6px;
+}
+.coord-box.set { border-color: var(--success); color: var(--success); background: #f0fdf4; }
+
+/* ── TYPE GRID ── */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin-bottom: 18px;
+}
+.type-btn {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 10px 4px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer; transition: all 0.15s;
+  font-family: var(--font); font-size: 11px;
+  color: var(--text-2); font-weight: 500;
+  text-align: center; line-height: 1.2;
+}
+.type-btn .ti { font-size: 22px; }
+.type-btn.sel {
+  border-color: var(--primary);
+  background: var(--primary-l);
+  color: var(--primary); font-weight: 700;
+}
+
+/* ── SEVERITY PILLS ── */
+.sev-row { display: flex; gap: 8px; margin-bottom: 18px; }
+.sev-btn {
+  flex: 1; padding: 12px 6px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  font-family: var(--font); font-size: 13px;
+  font-weight: 600; cursor: pointer;
+  text-align: center; color: var(--text-2);
+  transition: all 0.15s; line-height: 1.3;
+}
+.sev-btn small { display: block; font-size: 10px; font-weight: 400; margin-top: 2px; color: var(--text-3); }
+.sev-btn[data-s="near"].sel   { border-color:var(--near);     background:#f0fdf4; color:var(--near); }
+.sev-btn[data-s="frequent"].sel{ border-color:var(--frequent); background:#fffbeb; color:var(--frequent); }
+.sev-btn[data-s="accident"].sel{ border-color:var(--accident); background:#fef2f2; color:var(--accident); }
+
+/* ── PHOTO UPLOAD ── */
+.photo-upload {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface2);
+  margin-bottom: 18px;
+}
+.photo-upload:hover { border-color: var(--primary); background: var(--primary-l); }
+.photo-upload input { display: none; }
+.photo-preview {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 10px;
+}
+.photo-thumb {
+  width: 60px; height: 60px;
+  border-radius: 6px; object-fit: cover;
+  border: 2px solid var(--border);
+  position: relative;
+}
+
+/* ── SUBMIT BTN ── */
+.submit-btn {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 64px);
+  left: 20px; right: 20px;
+  background: var(--primary);
+  color: #fff; border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-family: var(--font); font-size: 16px; font-weight: 700;
+  cursor: pointer; z-index: 950;
+  box-shadow: 0 4px 20px rgba(26,86,219,0.4);
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.submit-btn:active { transform: scale(0.98); background: #1d4ed8; }
+.submit-btn.loading { opacity: 0.7; pointer-events: none; }
+
+/* ── REPORTS LIST ── */
+.filter-row {
+  display: flex; gap: 6px;
+  padding: 0 0 14px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font); font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; color: var(--text-2);
+  transition: all 0.15s; flex-shrink: 0;
+}
+.filter-chip.active { border-color: var(--primary); background: var(--primary-l); color: var(--primary); }
+
+.report-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.report-card::before {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:4px; background: var(--clr, var(--primary));
+}
+.report-card:active { transform: scale(0.99); }
+.rc-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; gap:8px; }
+.rc-type { display:flex; align-items:center; gap:6px; font-size:14px; font-weight:700; }
+.rc-sev {
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 100px;
+  background: color-mix(in srgb, var(--clr) 12%, white);
+  color: var(--clr, var(--primary));
+  white-space: nowrap; flex-shrink: 0;
+}
+.rc-desc { font-size:13px; color:var(--text-2); margin-bottom:8px; line-height:1.5;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.rc-meta { display:flex; align-items:center; gap:12px; font-size:11px; color:var(--text-3); }
+.rc-vote {
+  margin-left:auto; display:flex; align-items:center; gap:4px;
+  background: var(--surface2); border:1.5px solid var(--border);
+  border-radius:100px; padding:3px 10px;
+  font-size:12px; font-weight:600; cursor:pointer;
+  color:var(--text-2); transition:all 0.15s;
+}
+.rc-vote.voted { border-color:var(--primary); background:var(--primary-l); color:var(--primary); }
+
+/* ── GAMIFICATION ── */
+.profile-card {
+  background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+  border-radius: var(--radius);
+  padding: 20px;
+  color: #fff;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.profile-card::after {
+  content:''; position:absolute; right:-20px; top:-20px;
+  width:120px; height:120px;
+  border-radius:50%; background:rgba(255,255,255,0.08);
+}
+.profile-name { font-size:18px; font-weight:700; margin-bottom:2px; }
+.profile-role { font-size:13px; opacity:0.8; margin-bottom:16px; }
+.profile-stats { display:flex; gap:20px; }
+.pstat { text-align:center; }
+.pstat-num { font-size:22px; font-weight:700; font-family:var(--mono); }
+.pstat-lbl { font-size:10px; opacity:0.8; font-weight:500; }
+
+.xp-bar {
+  background:rgba(255,255,255,0.2);
+  border-radius:4px; height:6px; margin:12px 0 4px;
+  overflow:hidden;
+}
+.xp-fill { height:100%; background:#fff; border-radius:4px; transition:width 0.5s; }
+.xp-txt { font-size:11px; opacity:0.8; }
+
+.badge-grid {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+  margin-bottom:18px;
+}
+.badge-item {
+  background:var(--surface2);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:12px 6px;
+  text-align:center;
+  transition:all 0.2s;
+}
+.badge-item.earned {
+  background:var(--primary-l);
+  border-color:#bfdbfe;
+}
+.badge-item.locked { opacity:0.4; }
+.badge-icon { font-size:28px; display:block; margin-bottom:4px; }
+.badge-name { font-size:10px; font-weight:600; color:var(--text-2); line-height:1.2; }
+.badge-item.earned .badge-name { color:var(--primary); }
+
+.leaderboard-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);
+  margin-bottom:8px;
+}
+.lb-rank {
+  font-family:var(--mono); font-size:13px; font-weight:700;
+  color:var(--text-3); width:24px; text-align:center;
+}
+.lb-rank.top1 { color:#f59e0b; }
+.lb-rank.top2 { color:#94a3b8; }
+.lb-rank.top3 { color:#b45309; }
+.lb-avatar {
+  width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:14px; color:#fff; flex-shrink:0;
+}
+.lb-name { font-size:14px; font-weight:600; flex:1; }
+.lb-role { font-size:11px; color:var(--text-3); }
+.lb-pts { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--primary); }
+
+/* ── MAP CONTROLS ── */
+.map-fab {
+  position:fixed;
+  right:16px;
+  background:var(--surface);
+  border:none; border-radius:12px;
+  width:44px; height:44px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; cursor:pointer;
+  box-shadow:var(--shadow-lg);
+  z-index:400; transition:all 0.2s;
+}
+.map-fab:active { transform:scale(0.95); }
+.map-fab.gps-fab { bottom: calc(80px + env(safe-area-inset-bottom)); }
+.map-fab.report-fab {
+  bottom: calc(130px + env(safe-area-inset-bottom));
+  background: var(--primary); color:#fff;
+  width:52px; height:52px; font-size:22px;
+  border-radius:14px;
+  box-shadow: 0 4px 20px rgba(26,86,219,0.4);
+}
+
+.map-legend {
+  position:fixed; left:12px;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,0.95);
+  border:1px solid var(--border);
+  border-radius:10px; padding:10px 12px;
+  font-size:11px; z-index:400;
+  backdrop-filter:blur(8px);
+  box-shadow:var(--shadow);
+}
+.legend-row { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+.legend-row:last-child { margin-bottom:0; }
+.legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:calc(80px + env(safe-area-inset-bottom));
+  left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--text); color:#fff;
+  padding:12px 20px; border-radius:100px;
+  font-size:14px; font-weight:600; z-index:9999;
+  white-space:nowrap; opacity:0;
+  transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:none;
+  box-shadow:var(--shadow-lg);
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── STATS BAR ── */
+.stats-bar {
+  display:flex; gap:0;
+  padding:10px 16px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.stats-bar::-webkit-scrollbar { display:none; }
+.stat-item {
+  display:flex; align-items:center; gap:6px;
+  padding:4px 14px;
+  border-right:1px solid var(--border);
+  white-space:nowrap; flex-shrink:0;
+}
+.stat-item:first-child { padding-left:0; }
+.stat-item:last-child { border-right:none; }
+.stat-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.stat-num { font-family:var(--mono); font-size:14px; font-weight:700; }
+.stat-lbl { font-size:11px; color:var(--text-3); }
+
+/* ── UPLOAD STATUS ── */
+.upload-status {
+  margin-top:8px; padding:10px 14px;
+  border-radius:var(--radius-sm);
+  font-size:13px; font-weight:500;
+  display:none; align-items:center; gap:8px;
+}
+.upload-status.sending { display:flex; background:#eff6ff; color:var(--primary); border:1px solid #bfdbfe; }
+.upload-status.success { display:flex; background:#f0fdf4; color:var(--success); border:1px solid #bbf7d0; }
+.upload-status.error   { display:flex; background:#fef2f2; color:var(--danger);  border:1px solid #fecaca; }
+
+/* ── PULSE ANIMATION ── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.live-dot { animation:pulse 2s infinite; }
+
+@keyframes pop {
+  0%{transform:scale(0.8); opacity:0}
+  60%{transform:scale(1.05)}
+  100%{transform:scale(1); opacity:1}
+}
+.pop { animation:pop 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+/* ── DIVIDER ── */
+.divider {
+  height:1px; background:var(--border);
+  margin:16px 0;
+}
+.section-title {
+  font-size:13px; font-weight:700; color:var(--text-2);
+  text-transform:uppercase; letter-spacing:0.6px;
+  margin-bottom:12px;
+}
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align:center; padding:48px 20px;
+  color:var(--text-3);
+}
+.empty-icon { font-size:48px; opacity:0.4; margin-bottom:12px; }
+.empty-txt { font-size:14px; }
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-badge">⚠</div>
+    SafeRoad<span style="color:var(--text-3)">TH</span>
+  </div>
+  <div class="header-right">
+    <div class="user-badge" onclick="openPanel('profile')">
+      <div class="user-avatar" id="hdr-avatar">?</div>
+      <span class="user-pts" id="hdr-pts">0 pts</span>
+      <span class="user-badge-icon" id="hdr-badge-icon">🌱</span>
+    </div>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-dot" style="background:var(--accident)"></div>
+    <span class="stat-num" id="cnt-a">0</span>
+    <span class="stat-lbl">อุบัติเหตุ</span>
+  </div>
+  <div class="stat-item">
+    <div class="stat-dot" style="background:var(--frequent)"></div>
+    <span class="stat-num" id="cnt-f">0</span>
+    <span class="stat-lbl">เกิดบ่อย</span>
+  </div>
+  <div class="stat-item">
+    <div class="stat-dot" style="background:var(--near)"></div>
+    <span class="stat-num" id="cnt-n">0</span>
+    <span class="stat-lbl">Hiyari Hatto</span>
+  </div>
+  <div class="stat-item">
+    <div class="live-dot" style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+    <span class="stat-lbl">LIVE</span>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="layout">
+  <div id="map"></div>
+</div>
+
+<!-- MAP FABS -->
+<button class="map-fab gps-fab" onclick="doGPS()" title="ตำแหน่งปัจจุบัน">📍</button>
+<button class="map-fab report-fab" onclick="openPanel('report')" title="รายงานจุดเสี่ยง">＋</button>
+
+<!-- MAP LEGEND -->
+<div class="map-legend">
+  <div class="legend-row"><div class="legend-dot" style="background:var(--near)"></div><span style="font-weight:600">เกือบเกิด</span></div>
+  <div class="legend-row"><div class="legend-dot" style="background:var(--frequent)"></div><span style="font-weight:600">เกิดบ่อย</span></div>
+  <div class="legend-row"><div class="legend-dot" style="background:var(--accident)"></div><span style="font-weight:600">อุบัติเหตุ</span></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="showView('map',this)">
+    <div class="nav-icon">🗺️</div>แผนที่
+  </button>
+  <button class="nav-btn" onclick="showView('list',this)">
+    <div class="nav-icon">📋</div>รายงาน
+    <span class="nav-badge" id="nav-badge" style="display:none">0</span>
+  </button>
+  <button class="nav-btn" onclick="openPanel('report')">
+    <div class="nav-icon" style="background:var(--primary);border-radius:50%;color:#fff;width:40px;height:40px;margin-top:-8px;box-shadow:0 2px 10px rgba(26,86,219,0.4)">＋</div>
+    รายงาน
+  </button>
+  <button class="nav-btn" onclick="showView('rank',this)">
+    <div class="nav-icon">🏆</div>อันดับ
+  </button>
+  <button class="nav-btn" onclick="openPanel('profile')">
+    <div class="nav-icon">👤</div>โปรไฟล์
+  </button>
+</nav>
+
+<!-- ===================== PANELS ===================== -->
+
+<!-- OVERLAY -->
+<div class="panel-overlay" id="overlay" onclick="closeAllPanels()"></div>
+
+<!-- PANEL: REPORT FORM -->
+<div class="panel" id="panel-report">
+  <div class="panel-handle"></div>
+  <div class="panel-header">
+    <div class="panel-title">📍 รายงานจุดเสี่ยง</div>
+    <button class="panel-close" onclick="closeAllPanels()">✕</button>
+  </div>
+  <div class="panel-body">
+
+    <!-- STEP 1: ตำแหน่ง -->
+    <div class="section-title">1. ตำแหน่งพิกัด</div>
+    <div class="gps-row">
+      <button class="gps-btn" id="gps-btn" onclick="getGPS()">
+        <span>📡</span><span>ใช้ GPS ของฉัน</span>
+      </button>
+      <div class="coord-box" id="coord-box">
+        <span>📍</span><span id="coord-txt">ยังไม่ได้เลือก<br>คลิกแผนที่ / GPS</span>
+      </div>
+    </div>
+
+    <!-- STEP 2: ประเภท -->
+    <div class="section-title">2. ประเภทจุดเสี่ยง</div>
+    <div class="type-grid" id="type-grid">
+      <button class="type-btn" data-t="intersection" onclick="selType(this)"><span class="ti">🚦</span>สี่แยก</button>
+      <button class="type-btn" data-t="curve" onclick="selType(this)"><span class="ti">↩️</span>โค้งอันตราย</button>
+      <button class="type-btn" data-t="pedestrian" onclick="selType(this)"><span class="ti">🚶</span>ทางข้าม</button>
+      <button class="type-btn" data-t="school" onclick="selType(this)"><span class="ti">🏫</span>โรงเรียน</button>
+      <button class="type-btn" data-t="road" onclick="selType(this)"><span class="ti">🛣️</span>ถนนชำรุด</button>
+      <button class="type-btn" data-t="lighting" onclick="selType(this)"><span class="ti">💡</span>ไฟถนน</button>
+      <button class="type-btn" data-t="speed" onclick="selType(this)"><span class="ti">🏎️</span>ความเร็ว</button>
+      <button class="type-btn" data-t="vulnerable" onclick="selType(this)"><span class="ti">♿</span>กลุ่มเปราะบาง</button>
+    </div>
+
+    <!-- STEP 3: ระดับ -->
+    <div class="section-title">3. ระดับความรุนแรง</div>
+    <div class="sev-row">
+      <button class="sev-btn" data-s="near" onclick="selSev(this)">🟢 เกือบเกิด<small>Hiyari Hatto</small></button>
+      <button class="sev-btn" data-s="frequent" onclick="selSev(this)">🟡 เกิดบ่อย<small>Black Spot</small></button>
+      <button class="sev-btn" data-s="accident" onclick="selSev(this)">🔴 เกิดแล้ว<small>อุบัติเหตุ</small></button>
+    </div>
+
+    <!-- STEP 4: รายละเอียด -->
+    <div class="section-title">4. คำอธิบาย</div>
+    <div class="form-group">
+      <textarea class="form-textarea" id="inp-desc" placeholder="อธิบายสภาพอันตราย หรือเหตุการณ์ที่เกิดขึ้น เพื่อให้หน่วยงานนำไปแก้ไขได้ถูกต้อง..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label class="form-label">ช่วงเวลา</label>
+          <select class="form-select" id="inp-time">
+            <option value="">เลือกช่วงเวลา</option>
+            <option>เช้า 05:00-09:00</option>
+            <option>สาย 09:00-12:00</option>
+            <option>บ่าย 12:00-16:00</option>
+            <option>เย็น 16:00-20:00</option>
+            <option>กลางคืน 20:00-01:00</option>
+            <option>ดึก 01:00-05:00</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">สภาพอากาศ</label>
+          <select class="form-select" id="inp-weather">
+            <option value="">เลือกสภาพ</option>
+            <option>☀️ ปกติ</option>
+            <option>🌧️ ฝนตก</option>
+            <option>🌫️ หมอก</option>
+            <option>🌙 กลางคืน</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: รูปภาพ -->
+    <div class="section-title">5. ภาพประกอบ (ถ้ามี)</div>
+    <label class="photo-upload" id="photo-area">
+      <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhoto(event)">
+      <div style="font-size:28px;margin-bottom:6px">📷</div>
+      <div style="font-size:14px;color:var(--text-2);font-weight:500">แตะเพื่อเลือก / ถ่ายรูป</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:4px">JPG, PNG (สูงสุด 3 รูป)</div>
+      <div class="photo-preview" id="photo-preview"></div>
+    </label>
+
+    <!-- STEP 6: ข้อมูลผู้รายงาน -->
+    <div class="section-title">6. ข้อมูลผู้รายงาน</div>
+    <div class="form-group">
+      <input class="form-input" id="inp-name" placeholder="ชื่อ-นามสกุล / ชื่อเล่น">
+    </div>
+    <div class="form-group">
+      <select class="form-select" id="inp-role">
+        <option value="">-- ฉันคือ --</option>
+        <option>นักศึกษา</option>
+        <option>อาจารย์/บุคลากร</option>
+        <option>ประชาชนทั่วไป</option>
+        <option>ผู้ประสบเหตุโดยตรง</option>
+        <option>พยานเหตุการณ์</option>
+        <option>เจ้าหน้าที่</option>
+      </select>
+    </div>
+
+    <div id="upload-status" class="upload-status"></div>
+  </div>
+
+  <button class="submit-btn" id="submit-btn" onclick="submitReport()">
+    ⚠️ ส่งรายงานจุดเสี่ยง
+  </button>
+</div>
+
+<!-- PANEL: PROFILE / GAMIFICATION -->
+<div class="panel" id="panel-profile">
+  <div class="panel-handle"></div>
+  <div class="panel-header">
+    <div class="panel-title">👤 โปรไฟล์ & ความสำเร็จ</div>
+    <button class="panel-close" onclick="closeAllPanels()">✕</button>
+  </div>
+  <div class="panel-body">
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+      <div class="profile-name" id="prof-name">ตั้งชื่อผู้ใช้ก่อน</div>
+      <div class="profile-role" id="prof-role">กดแก้ไขเพื่อตั้งชื่อ</div>
+      <div class="profile-stats">
+        <div class="pstat">
+          <div class="pstat-num" id="prof-reports">0</div>
+          <div class="pstat-lbl">รายงาน</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-num" id="prof-votes">0</div>
+          <div class="pstat-lbl">โหวตจาก</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-num" id="prof-pts">0</div>
+          <div class="pstat-lbl">คะแนน</div>
+        </div>
+      </div>
+      <div class="xp-bar">
+        <div class="xp-fill" id="xp-fill" style="width:0%"></div>
+      </div>
+      <div class="xp-txt" id="xp-txt">0 / 100 XP สู่ระดับถัดไป</div>
+    </div>
+
+    <!-- Edit name -->
+    <div class="form-group">
+      <label class="form-label">แก้ไขชื่อผู้ใช้</label>
+      <div style="display:flex;gap:8px">
+        <input class="form-input" id="edit-name" placeholder="ชื่อ-นามสกุล">
+        <button onclick="saveName()" style="padding:0 16px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">บันทึก</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <select class="form-select" id="edit-role" onchange="saveRole()">
+        <option value="">-- สถานะ --</option>
+        <option>นักศึกษา</option>
+        <option>อาจารย์/บุคลากร</option>
+        <option>ประชาชนทั่วไป</option>
+        <option>เจ้าหน้าที่</option>
+      </select>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Badges -->
+    <div class="section-title">🏅 เหรียญรางวัล</div>
+    <div class="badge-grid" id="badge-grid"></div>
+
+    <div class="divider"></div>
+
+    <!-- How to earn -->
+    <div class="section-title">💡 วิธีสะสมคะแนน</div>
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--text-2);line-height:2">
+      📍 รายงานจุดใหม่ <strong style="color:var(--primary);float:right">+10 pts</strong><br>
+      👍 คนอื่นโหวตยืนยัน <strong style="color:var(--primary);float:right">+5 pts</strong><br>
+      🟢 รายงาน Hiyari Hatto <strong style="color:var(--primary);float:right">+10 pts</strong><br>
+      ✅ จุดได้รับการแก้ไข <strong style="color:var(--primary);float:right">+20 pts</strong><br>
+      📸 แนบรูปภาพ <strong style="color:var(--primary);float:right">+5 pts</strong>
+    </div>
+  </div>
+</div>
+
+<!-- LIST VIEW (อยู่ใน layout หลัก) -->
+<div id="view-list" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:200;top:56px;padding-top:10px;">
+  <div style="padding:0 16px 80px;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:16px;font-weight:700">รายงานทั้งหมด</div>
+      <div id="list-count" style="background:var(--primary);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;font-family:var(--mono)">0</div>
+    </div>
+    <div class="filter-row">
+      <button class="filter-chip active" onclick="filterList('all',this)">ทั้งหมด</button>
+      <button class="filter-chip" onclick="filterList('accident',this)">🔴 อุบัติเหตุ</button>
+      <button class="filter-chip" onclick="filterList('frequent',this)">🟡 เกิดบ่อย</button>
+      <button class="filter-chip" onclick="filterList('near',this)">🟢 Hiyari Hatto</button>
+    </div>
+    <div id="reports-container"></div>
+  </div>
+</div>
+
+<!-- RANK VIEW -->
+<div id="view-rank" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:200;top:56px;padding-top:10px;">
+  <div style="padding:0 16px 80px;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px">🏆 อันดับผู้รายงาน</div>
+
+    <!-- Weekly stats -->
+    <div style="background:linear-gradient(135deg,var(--primary),#2563eb);border-radius:var(--radius);padding:16px;color:#fff;margin-bottom:16px;">
+      <div style="font-size:12px;opacity:0.8;margin-bottom:8px">รายงานสัปดาห์นี้</div>
+      <div style="font-size:28px;font-weight:700;font-family:var(--mono)" id="week-count">0</div>
+      <div style="font-size:12px;opacity:0.8;margin-top:4px">จุดเสี่ยงถูกบันทึกแล้ว 🗺️</div>
+    </div>
+
+    <div class="section-title">อันดับทั้งหมด</div>
+    <div id="leaderboard-container"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================
+// CONFIG — เปลี่ยน URL นี้หลัง deploy Google Apps Script
+// ============================================
+const GAS_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+// ถ้ายังไม่ได้ตั้ง จะใช้ localStorage แทน (offline mode)
+
+// ============================================
+// STATE
+// ============================================
+const state = {
+  lat: null, lng: null,
+  selType: null, selSev: null,
+  photos: [],
+  reports: [],
+  filter: 'all',
+  user: { name: '', role: '', pts: 0, reports: 0, votes: 0 },
+  mapMarkers: [],
+  tempMarker: null,
+};
+
+const BADGE_DEFS = [
+  { id:'first',   icon:'🌱', name:'ก้าวแรก',      req: r => r >= 1  },
+  { id:'explorer',icon:'🔍', name:'นักสำรวจ',     req: r => r >= 5  },
+  { id:'guardian',icon:'🛡️', name:'ผู้พิทักษ์',   req: r => r >= 20 },
+  { id:'hero',    icon:'⭐', name:'วีรบุรุษถนน',  req: r => r >= 50 },
+  { id:'photo',   icon:'📸', name:'นักถ่ายภาพ',   req: r => state.photos.length > 0 || state.user.hasPhoto },
+  { id:'near',    icon:'🟢', name:'Hiyari Pro',    req: r => (state.reports||[]).filter(x=>x.sev==='near').length >= 3 },
+  { id:'campus',  icon:'🎓', name:'Campus Safety', req: r => state.user.role === 'นักศึกษา' && r >= 3 },
+  { id:'equity',  icon:'♿', name:'Equity Guard',  req: r => (state.reports||[]).filter(x=>x.type==='vulnerable').length >= 1 },
+];
+
+const SEV_COLOR = { near: '#059669', frequent: '#d97706', accident: '#dc2626' };
+const SEV_LABEL = { near: 'เกือบเกิด', frequent: 'เกิดบ่อย', accident: 'เกิดแล้ว' };
+const TYPE_ICON  = { intersection:'🚦', curve:'↩️', pedestrian:'🚶', school:'🏫', road:'🛣️', lighting:'💡', speed:'🏎️', vulnerable:'♿' };
+const TYPE_LABEL = { intersection:'สี่แยก', curve:'โค้งอันตราย', pedestrian:'ทางข้ามคนเดิน', school:'บริเวณโรงเรียน', road:'ถนนชำรุด', lighting:'แสงสว่างไม่พอ', speed:'ความเร็วสูง', vulnerable:'กลุ่มเปราะบาง' };
+
+const LEVEL_DEFS = [
+  { min:0,   max:100,  label:'ผู้เริ่มต้น',    icon:'🌱' },
+  { min:100, max:300,  label:'นักสำรวจ',       icon:'🔍' },
+  { min:300, max:700,  label:'ผู้พิทักษ์',     icon:'🛡️' },
+  { min:700, max:1500, label:'วีรบุรุษถนน',    icon:'⭐' },
+  { min:1500,max:99999,label:'ตำนานความปลอดภัย',icon:'🏆' },
+];
+
+// ============================================
+// MAP INIT
+// ============================================
+const map = L.map('map', { zoomControl: false }).setView([16.82, 100.26], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 19,
+}).addTo(map);
+
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+map.on('click', e => {
+  setCoord(e.latlng.lat, e.latlng.lng, 'map');
+  if (document.getElementById('panel-report').classList.contains('active')) return;
+  openPanel('report');
+});
+
+function makeIcon(sev, type) {
+  const clr = SEV_COLOR[sev] || '#1a56db';
+  const ico  = TYPE_ICON[type] || '⚠️';
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:38px;height:38px;background:${clr};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid rgba(255,255,255,0.9);box-shadow:0 3px 12px ${clr}66;display:flex;align-items:center;justify-content:center">
+             <span style="transform:rotate(45deg);font-size:16px;line-height:1">${ico}</span>
+           </div>`,
+    iconSize: [38, 38], iconAnchor: [19, 38],
+  });
+}
+
+function addMapMarker(r) {
+  const m = L.marker([r.lat, r.lng], { icon: makeIcon(r.sev, r.type) }).addTo(map);
+  const clr = SEV_COLOR[r.sev] || '#1a56db';
+  m.bindPopup(`
+    <div style="font-family:'Noto Sans Thai',sans-serif;min-width:200px;padding:4px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <span style="font-size:20px">${TYPE_ICON[r.type]||'⚠️'}</span>
+        <strong style="font-size:14px">${TYPE_LABEL[r.type]||r.type}</strong>
+      </div>
+      <span style="display:inline-block;background:${clr}18;color:${clr};padding:2px 10px;border-radius:100px;font-size:11px;font-weight:700;margin-bottom:8px">${SEV_LABEL[r.sev]}</span>
+      ${r.desc ? `<p style="font-size:13px;color:#475569;margin-bottom:6px;line-height:1.5">${r.desc}</p>` : ''}
+      ${r.time ? `<div style="font-size:12px;color:#94a3b8">⏰ ${r.time}</div>` : ''}
+      ${r.weather ? `<div style="font-size:12px;color:#94a3b8">${r.weather}</div>` : ''}
+      <div style="font-size:11px;color:#cbd5e1;margin-top:6px;font-family:monospace">${parseFloat(r.lat).toFixed(5)}, ${parseFloat(r.lng).toFixed(5)}</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px">👍 ${r.votes||0} คนยืนยัน · ${r.reporter||'ไม่ระบุ'}</div>
+    </div>
+  `, { maxWidth: 260 });
+  state.mapMarkers.push({ id: r.id, m });
+}
+
+// ============================================
+// GPS
+// ============================================
+function getGPS() {
+  const btn = document.getElementById('gps-btn');
+  btn.innerHTML = '<span>⏳</span><span>กำลังหาตำแหน่ง...</span>';
+  btn.classList.add('loading');
+
+  if (!navigator.geolocation) {
+    toast('⚠️ เบราว์เซอร์ไม่รองรับ GPS', 'error');
+    btn.innerHTML = '<span>📡</span><span>ใช้ GPS ของฉัน</span>';
+    btn.classList.remove('loading');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(pos => {
+    setCoord(pos.coords.latitude, pos.coords.longitude, 'gps');
+    map.flyTo([pos.coords.latitude, pos.coords.longitude], 17, { duration: 1.2 });
+    btn.innerHTML = '<span>✅</span><span>ได้ตำแหน่งแล้ว</span>';
+    btn.classList.remove('loading');
+    toast('✅ ได้ตำแหน่ง GPS แล้ว');
+  }, err => {
+    toast('⚠️ ไม่สามารถระบุตำแหน่งได้', 'error');
+    btn.innerHTML = '<span>📡</span><span>ใช้ GPS ของฉัน</span>';
+    btn.classList.remove('loading');
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function doGPS() {
+  if (!navigator.geolocation) { toast('ไม่รองรับ GPS'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    map.flyTo([pos.coords.latitude, pos.coords.longitude], 17, { duration: 1.2 });
+  }, () => toast('⚠️ ไม่สามารถระบุตำแหน่งได้'));
+}
+
+function setCoord(lat, lng, src) {
+  state.lat = lat; state.lng = lng;
+  const box = document.getElementById('coord-box');
+  document.getElementById('coord-txt').innerHTML =
+    `${lat.toFixed(5)}<br>${lng.toFixed(5)}`;
+  box.classList.add('set');
+
+  if (state.tempMarker) map.removeLayer(state.tempMarker);
+  state.tempMarker = L.circleMarker([lat, lng], {
+    radius: 10, fillColor: '#1a56db', fillOpacity: 0.5,
+    color: '#1a56db', weight: 2,
+  }).addTo(map);
+}
+
+// ============================================
+// FORM SELECTIONS
+// ============================================
+function selType(el) {
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  state.selType = el.dataset.t;
+}
+function selSev(el) {
+  document.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  state.selSev = el.dataset.s;
+}
+
+// ============================================
+// PHOTO HANDLING
+// ============================================
+function handlePhoto(e) {
+  const files = Array.from(e.target.files).slice(0, 3);
+  state.photos = files;
+  const prev = document.getElementById('photo-preview');
+  prev.innerHTML = '';
+  files.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = document.createElement('img');
+      img.src = ev.target.result;
+      img.className = 'photo-thumb pop';
+      prev.appendChild(img);
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+// ============================================
+// SUBMIT REPORT
+// ============================================
+async function submitReport() {
+  // Validate
+  if (!state.lat || !state.lng) return toast('📍 กรุณาเลือกตำแหน่งก่อน', 'error');
+  if (!state.selType)  return toast('⚠️ กรุณาเลือกประเภทจุดเสี่ยง', 'error');
+  if (!state.selSev)   return toast('⚠️ กรุณาเลือกระดับความรุนแรง', 'error');
+
+  const btn = document.getElementById('submit-btn');
+  btn.classList.add('loading');
+  btn.innerHTML = '⏳ กำลังส่งข้อมูล...';
+
+  const report = {
+    id:        Date.now().toString(),
+    lat:       state.lat,
+    lng:       state.lng,
+    type:      state.selType,
+    sev:       state.selSev,
+    desc:      document.getElementById('inp-desc').value.trim(),
+    time:      document.getElementById('inp-time').value,
+    weather:   document.getElementById('inp-weather').value,
+    reporter:  document.getElementById('inp-name').value.trim() || state.user.name || 'ไม่ระบุ',
+    role:      document.getElementById('inp-role').value || state.user.role,
+    votes:     0,
+    status:    'pending',
+    hasPhoto:  state.photos.length > 0,
+    createdAt: new Date().toLocaleString('th-TH'),
+    timestamp: new Date().toISOString(),
+  };
+
+  // Save locally first
+  state.reports.push(report);
+  saveLocal();
+  addMapMarker(report);
+  updateStats();
+  renderList();
+  renderLeaderboard();
+
+  // Points
+  let pts = 10;
+  if (state.photos.length > 0) pts += 5;
+  if (report.sev === 'near') pts += 10;
+  addPoints(pts);
+  checkBadges();
+
+  setStatus('sending', '⏳ กำลังส่งไป Google Sheets...');
+
+  // Try sending to Google Apps Script
+  const sent = await sendToGAS(report);
+
+  if (sent) {
+    setStatus('success', '✅ บันทึกสำเร็จ! ข้อมูลถูกส่งไประบบแล้ว');
+    toast(`✅ บันทึกจุดเสี่ยงสำเร็จ +${pts} pts!`);
+  } else {
+    setStatus('success', '✅ บันทึกในเครื่องแล้ว (จะซิงค์เมื่อออนไลน์)');
+    toast(`✅ บันทึกแล้ว +${pts} pts! (offline mode)`);
+  }
+
+  // Reset form
+  resetForm();
+  btn.classList.remove('loading');
+  btn.innerHTML = '⚠️ ส่งรายงานจุดเสี่ยง';
+
+  setTimeout(() => {
+    closeAllPanels();
+    setStatus('', '');
+  }, 1800);
+}
+
+async function sendToGAS(report) {
+  if (GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') return false;
+  try {
+    const fd = new FormData();
+    fd.append('action', 'addReport');
+    fd.append('data', JSON.stringify(report));
+    if (state.photos.length > 0) {
+      // encode first photo as base64
+      const b64 = await fileToBase64(state.photos[0]);
+      fd.append('photo', b64);
+    }
+    const res = await fetch(GAS_URL, { method: 'POST', body: fd });
+    const json = await res.json();
+    return json.status === 'ok';
+  } catch(e) {
+    console.warn('GAS offline:', e);
+    return false;
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise(r => {
+    const reader = new FileReader();
+    reader.onload = e => r(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('upload-status');
+  el.className = 'upload-status' + (type ? ' ' + type : '');
+  el.innerHTML = msg;
+}
+
+function resetForm() {
+  state.lat = state.lng = state.selType = state.selSev = null;
+  state.photos = [];
+  document.querySelectorAll('.type-btn,.sev-btn').forEach(b => b.classList.remove('sel'));
+  ['inp-desc','inp-time','inp-weather','inp-name','inp-role'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('photo-preview').innerHTML = '';
+  const box = document.getElementById('coord-box');
+  box.classList.remove('set');
+  document.getElementById('coord-txt').innerHTML = 'ยังไม่ได้เลือก<br>คลิกแผนที่ / GPS';
+  document.getElementById('gps-btn').innerHTML = '<span>📡</span><span>ใช้ GPS ของฉัน</span>';
+  if (state.tempMarker) { map.removeLayer(state.tempMarker); state.tempMarker = null; }
+}
+
+// ============================================
+// VOTE
+// ============================================
+function vote(id, el) {
+  const r = state.reports.find(x => x.id === id);
+  if (!r) return;
+  if (r._voted) { toast('⚠️ โหวตแล้ว'); return; }
+  r.votes = (r.votes || 0) + 1;
+  r._voted = true;
+  el.classList.add('voted');
+  el.innerHTML = `👍 ${r.votes}`;
+
+  // give points to reporter (local demo)
+  if (r.reporter === state.user.name) addPoints(5);
+
+  saveLocal();
+  renderList();
+  updateStats();
+  // sync to GAS
+  if (GAS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    fetch(GAS_URL, {
+      method:'POST',
+      body: new URLSearchParams({ action:'vote', id: id })
+    }).catch(()=>{});
+  }
+}
+
+// ============================================
+// RENDER LIST
+// ============================================
+function renderList() {
+  const container = document.getElementById('reports-container');
+  const filtered = state.filter === 'all'
+    ? state.reports
+    : state.reports.filter(r => r.sev === state.filter);
+
+  document.getElementById('list-count').textContent = filtered.length;
+  document.getElementById('nav-badge').textContent = state.reports.length;
+  document.getElementById('nav-badge').style.display = state.reports.length > 0 ? 'flex' : 'none';
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">🗺️</div><div class="empty-txt">ยังไม่มีรายงาน</div></div>`;
+    return;
+  }
+
+  container.innerHTML = [...filtered].reverse().map(r => {
+    const clr = SEV_COLOR[r.sev] || '#1a56db';
+    return `
+      <div class="report-card" style="--clr:${clr}" onclick="flyTo(${r.lat},${r.lng},'${r.id}')">
+        <div class="rc-top">
+          <div class="rc-type">${TYPE_ICON[r.type]||'⚠️'} ${TYPE_LABEL[r.type]||r.type}</div>
+          <div class="rc-sev">${SEV_LABEL[r.sev]}</div>
+        </div>
+        <div class="rc-desc">${r.desc || '(ไม่มีรายละเอียดเพิ่มเติม)'}</div>
+        <div class="rc-meta">
+          📍 ${parseFloat(r.lat).toFixed(4)}, ${parseFloat(r.lng).toFixed(4)}
+          ${r.time ? `· ⏰ ${r.time.split(' ')[0]}` : ''}
+          <div class="rc-vote ${r._voted?'voted':''}" onclick="event.stopPropagation();vote('${r.id}',this)">
+            👍 ${r.votes||0}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filterList(f, el) {
+  state.filter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function flyTo(lat, lng, id) {
+  showView('map');
+  setTimeout(() => {
+    map.flyTo([lat, lng], 17, { duration: 1 });
+    const m = state.mapMarkers.find(x => x.id === id);
+    if (m) setTimeout(() => m.m.openPopup(), 1100);
+  }, 100);
+}
+
+// ============================================
+// STATS
+// ============================================
+function updateStats() {
+  document.getElementById('cnt-a').textContent = state.reports.filter(r=>r.sev==='accident').length;
+  document.getElementById('cnt-f').textContent = state.reports.filter(r=>r.sev==='frequent').length;
+  document.getElementById('cnt-n').textContent = state.reports.filter(r=>r.sev==='near').length;
+  document.getElementById('week-count').textContent = state.reports.length;
+}
+
+// ============================================
+// GAMIFICATION
+// ============================================
+function addPoints(n) {
+  state.user.pts = (state.user.pts || 0) + n;
+  state.user.reports = state.reports.filter(r => r.reporter === state.user.name || !state.user.name).length;
+  saveUser();
+  updateUserUI();
+}
+
+function updateUserUI() {
+  const u = state.user;
+  const level = LEVEL_DEFS.find(l => u.pts >= l.min && u.pts < l.max) || LEVEL_DEFS[LEVEL_DEFS.length-1];
+  const pct = Math.min(100, ((u.pts - level.min) / (level.max - level.min)) * 100);
+
+  document.getElementById('hdr-avatar').textContent = (u.name||'?')[0].toUpperCase();
+  document.getElementById('hdr-pts').textContent = u.pts + ' pts';
+  document.getElementById('hdr-badge-icon').textContent = level.icon;
+
+  document.getElementById('prof-name').textContent = u.name || 'ไม่ระบุชื่อ';
+  document.getElementById('prof-role').textContent = (u.role || '') + ' · ' + level.label;
+  document.getElementById('prof-reports').textContent = state.reports.length;
+  document.getElementById('prof-votes').textContent = state.reports.reduce((a,r)=>a+(r.votes||0),0);
+  document.getElementById('prof-pts').textContent = u.pts;
+  document.getElementById('xp-fill').style.width = pct + '%';
+  document.getElementById('xp-txt').textContent = `${u.pts - level.min} / ${level.max - level.min} XP สู่ "${LEVEL_DEFS[LEVEL_DEFS.indexOf(level)+1]?.label || 'MAX'}"`;
+}
+
+function checkBadges() {
+  const earned = JSON.parse(localStorage.getItem('sr_badges') || '[]');
+  let newBadge = false;
+  BADGE_DEFS.forEach(b => {
+    if (!earned.includes(b.id) && b.req(state.reports.length)) {
+      earned.push(b.id);
+      newBadge = true;
+      setTimeout(() => toast(`🏅 ได้รับเหรียญ: ${b.icon} ${b.name}!`), 500);
+    }
+  });
+  if (newBadge) localStorage.setItem('sr_badges', JSON.stringify(earned));
+  renderBadges(earned);
+}
+
+function renderBadges(earned) {
+  const grid = document.getElementById('badge-grid');
+  if (!grid) return;
+  grid.innerHTML = BADGE_DEFS.map(b => `
+    <div class="badge-item ${earned.includes(b.id)?'earned':'locked'}">
+      <span class="badge-icon">${b.icon}</span>
+      <div class="badge-name">${b.name}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================
+// LEADERBOARD (local demo)
+// ============================================
+function renderLeaderboard() {
+  // Group by reporter
+  const map2 = {};
+  state.reports.forEach(r => {
+    const key = r.reporter || 'ไม่ระบุ';
+    if (!map2[key]) map2[key] = { name: key, role: r.role||'', count: 0, pts: 0 };
+    map2[key].count++;
+    map2[key].pts += 10;
+    if (r.sev === 'near') map2[key].pts += 10;
+    if (r.hasPhoto) map2[key].pts += 5;
+  });
+
+  const sorted = Object.values(map2).sort((a,b) => b.pts - a.pts);
+  const colors = ['#f59e0b','#94a3b8','#b45309','#1a56db','#059669'];
+  const container = document.getElementById('leaderboard-container');
+  if (!container) return;
+
+  if (sorted.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">🏆</div><div class="empty-txt">ยังไม่มีผู้รายงาน</div></div>`;
+    return;
+  }
+
+  container.innerHTML = sorted.map((u, i) => `
+    <div class="leaderboard-row">
+      <div class="lb-rank ${i===0?'top1':i===1?'top2':i===2?'top3':''}">${i < 3 ? ['🥇','🥈','🥉'][i] : i+1}</div>
+      <div class="lb-avatar" style="background:${colors[i%colors.length]}">${u.name[0].toUpperCase()}</div>
+      <div style="flex:1">
+        <div class="lb-name">${u.name}</div>
+        <div class="lb-role">${u.role||'ประชาชน'} · ${u.count} รายงาน</div>
+      </div>
+      <div class="lb-pts">${u.pts} pts</div>
+    </div>
+  `).join('');
+}
+
+// ============================================
+// USER PROFILE SAVE
+// ============================================
+function saveName() {
+  const n = document.getElementById('edit-name').value.trim();
+  if (!n) return toast('⚠️ กรุณาใส่ชื่อ', 'error');
+  state.user.name = n;
+  saveUser(); updateUserUI();
+  toast('✅ บันทึกชื่อแล้ว');
+}
+function saveRole() {
+  state.user.role = document.getElementById('edit-role').value;
+  saveUser(); updateUserUI();
+}
+
+// ============================================
+// STORAGE
+// ============================================
+function saveLocal() {
+  localStorage.setItem('sr_reports', JSON.stringify(state.reports));
+}
+function saveUser() {
+  localStorage.setItem('sr_user', JSON.stringify(state.user));
+}
+function loadLocal() {
+  const r = localStorage.getItem('sr_reports');
+  if (r) state.reports = JSON.parse(r);
+
+  const u = localStorage.getItem('sr_user');
+  if (u) Object.assign(state.user, JSON.parse(u));
+
+  document.getElementById('edit-name').value = state.user.name || '';
+  document.getElementById('edit-role').value = state.user.role || '';
+
+  const badges = JSON.parse(localStorage.getItem('sr_badges') || '[]');
+  renderBadges(badges);
+}
+
+// ============================================
+// LOAD FROM GAS (online sync)
+// ============================================
+async function loadFromGAS() {
+  if (GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') return;
+  try {
+    const res = await fetch(`${GAS_URL}?action=getReports`);
+    const json = await res.json();
+    if (json.data && Array.isArray(json.data)) {
+      // merge with local (avoid duplicates)
+      const ids = new Set(state.reports.map(r => r.id));
+      json.data.forEach(r => {
+        if (!ids.has(r.id)) {
+          state.reports.push(r);
+          addMapMarker(r);
+        }
+      });
+      saveLocal();
+      renderList();
+      updateStats();
+      renderLeaderboard();
+    }
+  } catch(e) { console.warn('Offline'); }
+}
+
+// ============================================
+// UI NAVIGATION
+// ============================================
+function openPanel(name) {
+  closeAllPanels();
+  const p = document.getElementById('panel-' + name);
+  if (!p) return;
+  document.getElementById('overlay').classList.add('active');
+  p.classList.add('active');
+}
+function closeAllPanels() {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('overlay').classList.remove('active');
+}
+
+let currentView = 'map';
+function showView(name, el) {
+  currentView = name;
+  document.getElementById('view-list').style.display = name === 'list' ? 'block' : 'none';
+  document.getElementById('view-rank').style.display = name === 'rank' ? 'block' : 'none';
+
+  // update nav
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (name === 'rank') renderLeaderboard();
+  if (name === 'list') renderList();
+}
+
+// ============================================
+// TOAST
+// ============================================
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type === 'error' ? '#dc2626' : '#1e293b';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ============================================
+// INIT
+// ============================================
+function init() {
+  loadLocal();
+  updateUserUI();
+
+  // render existing reports on map
+  state.reports.forEach(r => addMapMarker(r));
+  updateStats();
+  renderList();
+  renderLeaderboard();
+
+  // try to sync from GAS
+  loadFromGAS();
+
+  // add demo reports if empty
+  if (state.reports.length === 0) addDemoReports();
+}
+
+function addDemoReports() {
+  const demos = [
+    { lat:16.823, lng:100.264, type:'intersection', sev:'accident', desc:'สี่แยกไม่มีสัญญาณไฟ รถชนกันบ่อย', reporter:'อาจารย์วิชัย', role:'อาจารย์/บุคลากร', votes:7 },
+    { lat:16.831, lng:100.271, type:'curve',        sev:'frequent', desc:'โค้งมองไม่เห็นรถจากอีกทิศ มีรถล้มแล้ว', reporter:'นักศึกษาA', role:'นักศึกษา', votes:4 },
+    { lat:16.815, lng:100.255, type:'pedestrian',   sev:'near',     desc:'ทางม้าลายมองไม่ชัด เกือบถูกรถชน', reporter:'นักศึกษาB', role:'นักศึกษา', votes:3 },
+    { lat:16.828, lng:100.246, type:'lighting',     sev:'frequent', desc:'ไฟถนนดับ มืดมากกลางคืน', reporter:'ประชาชน', role:'ประชาชนทั่วไป', votes:2 },
+    { lat:16.818, lng:100.268, type:'vulnerable',   sev:'near',     desc:'ทางลาดสำหรับวีลแชร์ชำรุด ผู้สูงอายุลื่นล้ม', reporter:'นักศึกษาC', role:'นักศึกษา', votes:5 },
+  ];
+  demos.forEach((d, i) => {
+    const r = {
+      id: 'demo_' + i, ...d,
+      time: 'เย็น 16:00-20:00', weather: '☀️ ปกติ',
+      hasPhoto: false, status: 'verified',
+      createdAt: new Date().toLocaleString('th-TH'),
+    };
+    state.reports.push(r);
+    addMapMarker(r);
+  });
+  saveLocal();
+  updateStats();
+  renderList();
+  renderLeaderboard();
+}
+
+init();
+</script>
+</body>
+</html>
