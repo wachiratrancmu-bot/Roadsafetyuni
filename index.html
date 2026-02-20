@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Road Safety Monitor— ระบบรายงานจุดเสี่ยงทางถนน PSRU</title>
-
+<title>SafeRoad TH — ระบบรายงานจุดเสี่ยงทางถนน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -15,1727 +14,742 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-
 <style>
+/* ════════════════════════════════════════════════
+   SafeRoad TH — Production v5
+   Design: Light/Clean Institutional
+   Font: IBM Plex Sans Thai
+   ════════════════════════════════════════════════ */
 :root {
-  /* Base */
-  --white:     #ffffff;
-  --bg:        #f4f6f9;
-  --bg2:       #eef1f6;
-  --surface:   #ffffff;
-  --surface2:  #f7f9fc;
-  --surface3:  #edf0f5;
-
-  /* Borders */
-  --border:    #d4dae4;
-  --border2:   #b8c2d0;
-  --divider:   #e8ecf1;
-
-  /* Authority Blue — deep, institutional */
-  --navy:      #1b3a6b;
-  --navy-d:    #122b54;
-  --navy-m:    #2653a0;
-  --navy-l:    #e8edf7;
-  --navy-xl:   #f0f4fb;
-
-  /* Status colors — calibrated for severity */
-  --red:       #c0392b;
-  --red-m:     #e74c3c;
-  --red-l:     #fdf0ef;
-  --red-b:     #f9c9c5;
-
-  --amber:     #b7560a;
-  --amber-m:   #e67e22;
-  --amber-l:   #fdf4ec;
-  --amber-b:   #f7d9bc;
-
-  --green:     #1a7a4a;
-  --green-m:   #27ae60;
-  --green-l:   #edf8f2;
-  --green-b:   #b8e6cf;
-
-  --blue:      #2563eb;
-  --blue-l:    #eff6ff;
-  --blue-b:    #bfdbfe;
-
-  /* Text */
-  --text:      #1a2332;
-  --text-2:    #3d5168;
-  --text-3:    #6b7f99;
-  --text-4:    #9aaabb;
-
-  /* Typography */
-  --font:      'IBM Plex Sans Thai', sans-serif;
-  --mono:      'IBM Plex Mono', monospace;
-
-  /* Geometry */
-  --r-xs:      4px;
-  --r-sm:      6px;
-  --r:         10px;
-  --r-lg:      14px;
-  --r-xl:      18px;
-
-  /* Shadows — subtle, government-grade */
-  --sh-xs:     0 1px 3px rgba(27,58,107,0.06);
-  --sh:        0 2px 8px rgba(27,58,107,0.08), 0 1px 2px rgba(27,58,107,0.04);
-  --sh-md:     0 4px 16px rgba(27,58,107,0.10), 0 1px 4px rgba(27,58,107,0.06);
-  --sh-lg:     0 8px 32px rgba(27,58,107,0.12), 0 2px 8px rgba(27,58,107,0.06);
-  --sh-panel:  0 -4px 24px rgba(27,58,107,0.10), 0 -1px 6px rgba(27,58,107,0.06);
-}
-
-*, *::before, *::after {
-  margin: 0; padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html { height: 100%; }
-
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  height: 100%;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-
-.header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 56px;
-  background: var(--navy);
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-}
-
-.header-logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.header-emblem {
-  width: 32px;
-  height: 32px;
-  background: var(--white);
-  border-radius: var(--r-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.header-emblem svg {
-  width: 18px;
-  height: 18px;
-}
-
-.header-wordmark {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.header-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--white);
-  letter-spacing: 0.2px;
-  line-height: 1.2;
-}
-
-.header-sub {
-  font-size: 9.5px;
-  font-weight: 400;
-  color: rgba(255,255,255,0.6);
-  letter-spacing: 0.3px;
-  line-height: 1.2;
-}
-
-.header-counters {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: auto;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: var(--r-sm);
-  padding: 5px 10px;
-}
-
-.hcnt {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 8px;
-  border-right: 1px solid rgba(255,255,255,0.12);
-}
-.hcnt:last-child { border-right: none; }
-
-.hcnt-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.hcnt-n {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--white);
-}
-
-.hcnt-label {
-  font-size: 10px;
-  color: rgba(255,255,255,0.55);
-  font-weight: 400;
-}
-
-.status-bar {
-  position: fixed;
-  top: 56px;
-  left: 0; right: 0;
-  height: 36px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  gap: 8px;
-  z-index: 990;
-  box-shadow: var(--sh-xs);
-}
-
-.sb-live {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--green);
-  letter-spacing: 0.3px;
-}
-
-.sb-live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green-m);
-  animation: pulse 2.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.85); }
-}
-
-.sb-separator {
-  width: 1px;
-  height: 16px;
-  background: var(--divider);
-}
-
-.sb-mode-btns {
-  display: flex;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  overflow: hidden;
-}
-
-.sb-mode-btn {
-  padding: 4px 10px;
-  font-family: var(--font);
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--text-3);
-  background: none;
-  border: none;
-  border-right: 1px solid var(--border);
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.sb-mode-btn:last-child { border-right: none; }
-.sb-mode-btn.active {
-  background: var(--navy);
-  color: var(--white);
-}
-
-.sb-right {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sb-user-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: var(--navy-xl);
-  border: 1px solid var(--navy-l);
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  font-family: var(--font);
-  transition: all 0.15s;
-}
-.sb-user-btn:hover { background: var(--navy-l); }
-
-.sb-user-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--navy);
-  color: var(--white);
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sb-user-pts {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--navy);
-}
-
-/* ════════════════════════════════════════
-   MAP
-   ════════════════════════════════════════ */
-#map {
-  position: fixed;
-  top: 92px;
-  left: 0; right: 0;
-  bottom: 60px;
-  z-index: 1;
-}
-
-/* Leaflet custom styling */
-.leaflet-container {
-  font-family: var(--font) !important;
-}
-
-.leaflet-popup-content-wrapper {
-  border-radius: var(--r) !important;
-  box-shadow: var(--sh-md) !important;
-  border: 1px solid var(--border) !important;
-  padding: 0 !important;
-}
-
-.leaflet-popup-content {
-  margin: 0 !important;
-}
-
-.leaflet-popup-tip-container {
-  display: none;
-}
-
-/* ════════════════════════════════════════
-   MAP OVERLAY CONTROLS
-   ════════════════════════════════════════ */
-.map-legend {
-  position: fixed;
-  bottom: 70px;
-  left: 12px;
-  background: rgba(255,255,255,0.95);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 10px 12px;
-  z-index: 500;
-  backdrop-filter: blur(8px);
-  box-shadow: var(--sh-md);
-}
-
-.legend-title {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 7px;
-}
-
-.legend-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 4px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-2);
-}
-.legend-row:last-child { margin-bottom: 0; }
-
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.map-fab-group {
-  position: fixed;
-  right: 12px;
-  bottom: 70px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 500;
-}
-
-.map-fab {
-  width: 44px;
-  height: 44px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--sh-md);
-  transition: all 0.15s;
-  font-size: 17px;
-  color: var(--text-2);
-}
-.map-fab:active { transform: scale(0.95); }
-
-.map-fab-report {
-  width: 48px;
-  height: 48px;
-  background: var(--navy);
-  border-color: var(--navy-d);
-  color: var(--white);
-  font-size: 22px;
-  font-weight: 900;
-  border-radius: var(--r);
-  box-shadow: 0 4px 16px rgba(27,58,107,0.35);
-}
-
-/* ════════════════════════════════════════
-   BOTTOM NAV
-   ════════════════════════════════════════ */
-.bottom-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: 60px;
-  background: var(--surface);
-  border-top: 1.5px solid var(--border);
-  display: flex;
-  z-index: 1000;
-  box-shadow: 0 -2px 12px rgba(27,58,107,0.07);
-}
-
-.nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 9.5px;
-  font-weight: 600;
-  color: var(--text-4);
-  transition: all 0.15s;
-  padding-bottom: env(safe-area-inset-bottom);
-  position: relative;
-}
-
-.nav-item.active {
-  color: var(--navy);
-}
-
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 25%; right: 25%;
-  height: 2px;
-  background: var(--navy);
-  border-radius: 0 0 2px 2px;
-}
-
-.nav-icon {
-  width: 28px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  transition: transform 0.15s;
-}
-
-.nav-item.active .nav-icon {
-  transform: translateY(-1px);
-}
-
-.nav-center-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 9.5px;
-  font-weight: 700;
-  color: var(--navy);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.nav-center-icon {
-  width: 40px;
-  height: 32px;
-  background: var(--navy);
-  border-radius: var(--r-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
-  font-size: 18px;
-  margin-top: -8px;
-  box-shadow: 0 2px 10px rgba(27,58,107,0.3);
-}
-
-/* ════════════════════════════════════════
-   OVERLAY
-   ════════════════════════════════════════ */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10,18,35,0.45);
-  z-index: 1500;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-}
-.overlay.open {
-  opacity: 1;
-  pointer-events: all;
-}
-
-/* ════════════════════════════════════════
-   PANEL SYSTEM — Bottom sheet
-   ════════════════════════════════════════ */
-.panel {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--surface);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
-  z-index: 1600;
-  transform: translateY(100%);
-  transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
-  display: flex;
-  flex-direction: column;
-  max-height: 93vh;
-  box-shadow: var(--sh-panel);
-  border-top: 1px solid var(--border);
-}
-
-.panel.open {
-  transform: translateY(0);
-}
-
-.panel-handle-wrap {
-  display: flex;
-  justify-content: center;
-  padding: 10px 0 0;
-  flex-shrink: 0;
-}
-
-.panel-handle {
-  width: 38px;
-  height: 4px;
-  background: var(--border2);
-  border-radius: 2px;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 18px 8px;
-  border-bottom: 1px solid var(--divider);
-  flex-shrink: 0;
-}
-
-.panel-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.panel-header-icon {
-  width: 34px;
-  height: 34px;
-  background: var(--navy-xl);
-  border: 1px solid var(--navy-l);
-  border-radius: var(--r-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.panel-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.panel-subtitle {
-  font-size: 11px;
-  color: var(--text-3);
-  font-weight: 400;
-  margin-top: 1px;
-}
-
-.panel-close {
-  width: 30px;
-  height: 30px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text-3);
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-.panel-close:hover {
-  background: var(--surface3);
-  color: var(--text);
-}
-
-/* ════════════════════════════════════════
-   WIZARD STEPPER
-   ════════════════════════════════════════ */
-.wizard-stepper {
-  padding: 14px 18px 0;
-  flex-shrink: 0;
-}
-
-.step-track {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.step-node {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  flex-shrink: 0;
-  transition: all 0.25s;
-  border: 2px solid var(--border2);
-  background: var(--surface);
-  color: var(--text-3);
-  z-index: 1;
-}
-
-.step-node.done {
-  background: var(--navy);
-  border-color: var(--navy);
-  color: var(--white);
-}
-
-.step-node.active {
-  background: var(--navy);
-  border-color: var(--navy);
-  color: var(--white);
-  box-shadow: 0 0 0 4px rgba(27,58,107,0.12);
-}
-
-.step-connector {
-  flex: 1;
-  height: 2px;
-  background: var(--border);
-  margin: 0 4px;
-  transition: background 0.3s;
-  border-radius: 1px;
-}
-.step-connector.done {
-  background: var(--navy);
-}
-
-.step-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--divider);
-}
-
-.step-label-current {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--navy);
-  letter-spacing: 0.1px;
-}
-
-.step-counter {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text-4);
-  font-weight: 500;
-}
-
-/* ════════════════════════════════════════
-   PANEL BODY / SCROLL AREA
-   ════════════════════════════════════════ */
-.panel-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 18px 160px;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-}
-.panel-body::-webkit-scrollbar { display: none; }
-
-/* ════════════════════════════════════════
-   FORM COMPONENTS
-   ════════════════════════════════════════ */
-
-/* Section label — ข้อกำหนดแต่ละหัวข้อ */
-.field-section {
-  margin-top: 20px;
-  margin-bottom: 10px;
-}
-
-.field-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--navy);
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  margin-bottom: 3px;
-}
-
-.field-label .req {
-  color: var(--red);
-  margin-left: 3px;
-}
-
-.field-desc {
-  font-size: 11.5px;
-  color: var(--text-3);
-  font-weight: 400;
-  line-height: 1.4;
-}
-
-/* ── OPTION CARDS ── */
-/* Event type — full width rows */
-.event-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.event-opt {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 13px 14px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r);
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: left;
-  width: 100%;
-  font-family: var(--font);
-}
-
-.event-opt:active { transform: scale(0.99); }
-
-.event-opt-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.event-opt-text { flex: 1; }
-
-.event-opt-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 2px;
-}
-
-.event-opt-desc {
-  font-size: 11.5px;
-  color: var(--text-3);
-  line-height: 1.35;
-}
-
-.event-opt-badge {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-
-/* Severity-specific colors */
-.event-opt[data-sev="accident"] { border-left: 4px solid var(--red-m); }
-.event-opt[data-sev="frequent"] { border-left: 4px solid var(--amber-m); }
-.event-opt[data-sev="near"]     { border-left: 4px solid var(--green-m); }
-.event-opt[data-sev="observe"]  { border-left: 4px solid var(--navy-m); }
-
-.event-opt[data-sev="accident"] .event-opt-icon { background: var(--red-l); }
-.event-opt[data-sev="frequent"] .event-opt-icon { background: var(--amber-l); }
-.event-opt[data-sev="near"]     .event-opt-icon { background: var(--green-l); }
-.event-opt[data-sev="observe"]  .event-opt-icon { background: var(--navy-xl); }
-
-.event-opt.selected[data-sev="accident"] {
-  background: var(--red-l);
-  border-color: var(--red-m);
-  border-left: 4px solid var(--red);
-}
-.event-opt.selected[data-sev="frequent"] {
-  background: var(--amber-l);
-  border-color: var(--amber-m);
-  border-left: 4px solid var(--amber);
-}
-.event-opt.selected[data-sev="near"] {
-  background: var(--green-l);
-  border-color: var(--green-m);
-  border-left: 4px solid var(--green);
-}
-.event-opt.selected[data-sev="observe"] {
-  background: var(--navy-xl);
-  border-color: var(--navy-m);
-  border-left: 4px solid var(--navy);
-}
-.event-opt.selected .event-opt-badge {
-  background: currentColor;
-  border-color: currentColor;
-}
-
-/* Injury severity sub-section */
-.injury-section {
-  display: none;
-  margin-top: 14px;
-  padding: 14px;
-  background: var(--red-l);
-  border: 1px solid var(--red-b);
-  border-radius: var(--r);
-}
-.injury-section.visible { display: block; }
-.injury-section .field-label { color: var(--red); }
-
-/* ── GRID OPTIONS ── (ใช้ทั่วไป) */
-.opts-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-.opts-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
-.opts-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
-
-.opt-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 11px 6px 9px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  transition: all 0.13s;
-  font-family: var(--font);
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--text-2);
-  text-align: center;
-  line-height: 1.25;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.opt-card-icon {
-  font-size: 22px;
-  line-height: 1;
-}
-
-.opt-card:active { transform: scale(0.97); }
-
-.opt-card.selected {
-  border-color: var(--navy);
-  background: var(--navy-xl);
-  color: var(--navy);
-  font-weight: 700;
-}
-
-.opt-card.selected-red {
-  border-color: var(--red);
-  background: var(--red-l);
-  color: var(--red);
-  font-weight: 700;
-}
-
-/* ── HORIZONTAL PILL OPTIONS ── (time of day etc.) */
-.pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.pill-opt {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 100px;
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-2);
-  transition: all 0.13s;
-  white-space: nowrap;
-  -webkit-user-select: none;
-  user-select: none;
-}
-.pill-opt:active { transform: scale(0.97); }
-.pill-opt.selected {
-  background: var(--navy);
-  border-color: var(--navy);
-  color: var(--white);
-  font-weight: 600;
-}
-
-/* ── GPS / COORDINATE ROW ── */
-.gps-row {
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
-}
-
-.gps-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 14px;
-  background: var(--blue-l);
-  border: 1.5px solid var(--blue-b);
-  border-radius: var(--r-sm);
-  color: var(--blue);
-  font-family: var(--font);
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.gps-btn:active { background: #dbeafe; }
-.gps-btn.loading { opacity: 0.7; pointer-events: none; }
-
-.coord-display {
-  flex: 1;
-  padding: 9px 12px;
-  background: var(--surface2);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text-4);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-.coord-display.set {
-  border-color: var(--green-m);
-  color: var(--green);
-  background: var(--green-l);
-}
-
-.coord-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.map-tap-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  font-size: 11px;
-  color: var(--text-4);
-  padding: 5px 0;
-}
-
-/* ── FORM INPUTS ── */
-.form-input {
-  width: 100%;
-  padding: 10px 13px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.form-input:focus { border-color: var(--navy); }
-.form-input::placeholder { color: var(--text-4); }
-
-.form-textarea {
-  width: 100%;
-  padding: 10px 13px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 14px;
-  outline: none;
-  resize: none;
-  min-height: 88px;
-  line-height: 1.6;
-  transition: border-color 0.15s;
-}
-.form-textarea:focus { border-color: var(--navy); }
-.form-textarea::placeholder { color: var(--text-4); }
-
-/* ── PHOTO UPLOAD ── */
-.photo-upload-zone {
-  border: 2px dashed var(--border2);
-  border-radius: var(--r);
-  padding: 22px 16px;
-  text-align: center;
-  cursor: pointer;
-  background: var(--surface2);
-  transition: all 0.2s;
-}
-.photo-upload-zone:hover {
-  border-color: var(--navy);
-  background: var(--navy-xl);
-}
-.photo-upload-zone input { display: none; }
-
-.photo-upload-icon { font-size: 28px; margin-bottom: 6px; opacity: 0.6; }
-.photo-upload-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-  margin-bottom: 3px;
-}
-.photo-upload-sub {
-  font-size: 11px;
-  color: var(--text-4);
-}
-
-.photo-previews {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.photo-thumb {
-  width: 68px;
-  height: 68px;
-  border-radius: var(--r-sm);
-  object-fit: cover;
-  border: 2px solid var(--border);
-}
-
-/* ── DIVIDER ── */
-.form-divider {
-  height: 1px;
-  background: var(--divider);
-  margin: 16px 0;
-}
-
-/* ════════════════════════════════════════
-   WIZARD BOTTOM NAVIGATION
-   ════════════════════════════════════════ */
-.wizard-footer {
-  position: fixed;
-  bottom: 60px;
-  left: 0; right: 0;
-  padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
-  background: var(--surface);
-  border-top: 1px solid var(--divider);
-  display: none;
-  gap: 10px;
-  z-index: 1700;
-  box-shadow: 0 -2px 8px rgba(27,58,107,0.06);
-}
-.wizard-footer.active { display: flex; }
-
-.wf-back {
-  padding: 13px 18px;
-  background: var(--surface2);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  font-family: var(--font);
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-2);
-  cursor: pointer;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-.wf-back:hover { background: var(--surface3); }
-
-.wf-next {
-  flex: 1;
-  padding: 13px;
-  background: var(--navy);
-  border: none;
-  border-radius: var(--r-sm);
-  font-family: var(--font);
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--white);
-  cursor: pointer;
-  transition: all 0.15s;
-  box-shadow: 0 2px 10px rgba(27,58,107,0.25);
-  letter-spacing: 0.1px;
-}
-.wf-next:hover { background: var(--navy-d); }
-.wf-next:active { transform: scale(0.99); }
-.wf-next.submit {
-  background: var(--green);
-  box-shadow: 0 2px 10px rgba(26,122,74,0.25);
-}
-.wf-next.loading {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-/* ════════════════════════════════════════
-   FULL-SCREEN VIEWS (LIST / RANK)
-   ════════════════════════════════════════ */
-.full-view {
-  position: fixed;
-  inset: 0;
-  top: 92px;
-  bottom: 60px;
-  background: var(--bg);
-  z-index: 800;
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-}
-.full-view.open { display: flex; }
-
-.fv-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 16px 10px;
-  flex-shrink: 0;
-}
-
-.fv-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.fv-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.fv-badge {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--navy);
-  color: var(--white);
-  padding: 3px 10px;
-  border-radius: 100px;
-}
-
-.filter-chips {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.filter-chips::-webkit-scrollbar { display: none; }
-
-.filter-chip {
-  padding: 5px 13px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 100px;
-  font-family: var(--font);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-3);
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: all 0.13s;
-}
-.filter-chip.active {
-  background: var(--navy);
-  border-color: var(--navy);
-  color: var(--white);
-}
-
-.fv-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 14px 16px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.fv-body::-webkit-scrollbar { display: none; }
-
-/* ── REPORT CARD ── */
-.report-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  overflow: hidden;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.13s;
-  box-shadow: var(--sh-xs);
-}
-.report-card:active { transform: scale(0.99); box-shadow: none; }
-
-.rc-severity-bar {
-  height: 3px;
-  width: 100%;
-}
-
-.rc-body {
-  padding: 11px 13px 10px;
-}
-
-.rc-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 5px;
-}
-
-.rc-type-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.rc-sev-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 100px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.rc-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-
-.rc-tag {
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 3px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text-3);
-  font-weight: 500;
-}
-
-.rc-desc {
-  font-size: 12px;
-  color: var(--text-2);
-  line-height: 1.5;
-  margin-bottom: 8px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.rc-footer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 10.5px;
-  color: var(--text-4);
-}
-
-.rc-vote-btn {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  font-family: var(--font);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  cursor: pointer;
-  transition: all 0.13s;
-}
-.rc-vote-btn.voted {
-  background: var(--navy-xl);
-  border-color: var(--navy-l);
-  color: var(--navy);
-}
-
-/* ── EMPTY STATE ── */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 56px 24px;
-  color: var(--text-4);
-  text-align: center;
-}
-.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.35; }
-.empty-text { font-size: 13px; }
-
-/* ════════════════════════════════════════
-   PROFILE / GAMIFICATION PANEL
-   ════════════════════════════════════════ */
-.profile-card {
-  background: var(--navy);
-  border-radius: var(--r);
-  padding: 18px;
-  color: var(--white);
-  margin-bottom: 16px;
-  position: relative;
-  overflow: hidden;
-}
-.profile-card::before {
-  content: '';
-  position: absolute;
-  right: -24px; top: -24px;
-  width: 120px; height: 120px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.04);
-}
-
-.pc-name {
-  font-size: 17px;
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-.pc-level {
-  font-size: 11px;
-  color: rgba(255,255,255,0.65);
-  margin-bottom: 16px;
-}
-.pc-stats {
-  display: flex;
-  gap: 20px;
-}
-.pcs-num {
-  font-family: var(--mono);
-  font-size: 22px;
-  font-weight: 700;
-  color: #fbbf24;
-}
-.pcs-label {
-  font-size: 10px;
-  color: rgba(255,255,255,0.55);
-  margin-top: 1px;
-}
-.pc-xp-bar {
-  height: 4px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 2px;
-  margin: 14px 0 5px;
-  overflow: hidden;
-}
-.pc-xp-fill {
-  height: 100%;
-  background: #fbbf24;
-  border-radius: 2px;
-  transition: width 0.6s ease;
-}
-.pc-xp-label {
-  font-size: 10px;
-  color: rgba(255,255,255,0.5);
-}
-
-.badge-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.badge-card {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  padding: 11px 4px;
-  text-align: center;
-}
-.badge-card.earned {
-  background: var(--navy-xl);
-  border-color: var(--navy-l);
-}
-.badge-card.locked { opacity: 0.35; }
-.badge-card-icon { font-size: 26px; display: block; margin-bottom: 4px; }
-.badge-card-name {
-  font-size: 9.5px;
-  font-weight: 600;
-  color: var(--text-3);
-  line-height: 1.2;
-}
-.badge-card.earned .badge-card-name { color: var(--navy); }
-
-.pts-guide {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  overflow: hidden;
-}
-.pts-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 13px;
-  border-bottom: 1px solid var(--divider);
-  font-size: 12.5px;
-}
-.pts-row:last-child { border-bottom: none; }
-.pts-val {
-  font-family: var(--mono);
-  font-weight: 700;
-  color: var(--navy);
-  font-size: 12px;
-}
-
-/* ── LEADERBOARD ── */
-.lb-card {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 11px 13px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  margin-bottom: 6px;
-  box-shadow: var(--sh-xs);
-}
-.lb-rank {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-3);
-  width: 28px;
-  text-align: center;
-  flex-shrink: 0;
-}
-.lb-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--white);
-  flex-shrink: 0;
-}
-.lb-info { flex: 1; min-width: 0; }
-.lb-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.lb-sub { font-size: 10.5px; color: var(--text-4); }
-.lb-pts {
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-/* ════════════════════════════════════════
-   MAP POPUP CUSTOM
-   ════════════════════════════════════════ */
-.map-popup {
-  padding: 13px 14px;
-  min-width: 220px;
-  max-width: 270px;
-}
-.mp-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.mp-sev-bar {
-  width: 4px;
-  border-radius: 2px;
-  align-self: stretch;
-  flex-shrink: 0;
-}
-.mp-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-}
-.mp-badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 100px;
-  margin-bottom: 6px;
-}
-.mp-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin-bottom: 6px;
-}
-.mp-tag {
-  font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 3px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text-3);
-}
-.mp-desc {
-  font-size: 12px;
-  color: var(--text-2);
-  line-height: 1.5;
-  margin-bottom: 6px;
-}
-.mp-meta {
-  font-size: 10.5px;
-  color: var(--text-4);
-}
-
-/* ════════════════════════════════════════
-   TOAST NOTIFICATION
-   ════════════════════════════════════════ */
-.toast {
-  position: fixed;
-  bottom: 76px;
-  left: 50%;
-  transform: translateX(-50%) translateY(16px);
-  background: var(--navy);
-  color: var(--white);
-  padding: 10px 20px;
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  z-index: 9999;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 4px 20px rgba(27,58,107,0.25);
-  max-width: 90vw;
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-.toast.error { background: var(--red); }
-.toast.success { background: var(--green); }
-
-/* ════════════════════════════════════════
-   MISC UTILITIES
-   ════════════════════════════════════════ */
-.section-heading {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  margin-bottom: 10px;
-}
-
-.required-note {
-  font-size: 11px;
-  color: var(--text-4);
-  margin-top: 6px;
-}
-.required-note span { color: var(--red); }
-
-/* cluster group styling override */
-.marker-cluster {
-  background: rgba(27,58,107,0.15) !important;
-  border: 2px solid var(--navy) !important;
-}
-.marker-cluster div {
-  background: var(--navy) !important;
-  color: white !important;
-  font-family: var(--mono) !important;
-  font-weight: 700 !important;
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
-}
-.animate-in { animation: slide-up 0.22s ease both; }
+  --white:    #ffffff;
+  --bg:       #f4f6f9;
+  --bg2:      #eef1f6;
+  --surface:  #ffffff;
+  --surface2: #f7f9fc;
+  --surface3: #edf0f5;
+  --border:   #d4dae4;
+  --border2:  #b8c2d0;
+  --divider:  #e8ecf1;
+  --navy:     #1b3a6b;
+  --navy-d:   #122b54;
+  --navy-m:   #2653a0;
+  --navy-l:   #e8edf7;
+  --navy-xl:  #f0f4fb;
+  --red:      #c0392b; --red-m:#e74c3c; --red-l:#fdf0ef; --red-b:#f9c9c5;
+  --amber:    #b7560a; --amber-m:#e67e22; --amber-l:#fdf4ec; --amber-b:#f7d9bc;
+  --green:    #1a7a4a; --green-m:#27ae60; --green-l:#edf8f2; --green-b:#b8e6cf;
+  --blue:     #2563eb; --blue-l:#eff6ff; --blue-b:#bfdbfe;
+  --text:     #1a2332; --text-2:#3d5168; --text-3:#6b7f99; --text-4:#9aaabb;
+  --font:     'IBM Plex Sans Thai', sans-serif;
+  --mono:     'IBM Plex Mono', monospace;
+  --r-xs:4px; --r-sm:6px; --r:10px; --r-lg:14px; --r-xl:18px;
+  --sh-xs:0 1px 3px rgba(27,58,107,.06);
+  --sh:0 2px 8px rgba(27,58,107,.08),0 1px 2px rgba(27,58,107,.04);
+  --sh-md:0 4px 16px rgba(27,58,107,.10),0 1px 4px rgba(27,58,107,.06);
+  --sh-lg:0 8px 32px rgba(27,58,107,.12),0 2px 8px rgba(27,58,107,.06);
+  --sh-panel:0 -4px 24px rgba(27,58,107,.10);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* ════ LOGIN SCREEN ════ */
+#login-screen{
+  position:fixed;inset:0;z-index:9000;
+  background:var(--navy);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:24px;
+  transition:opacity .4s ease,transform .4s ease;
+}
+#login-screen.hide{opacity:0;transform:scale(1.04);pointer-events:none}
+
+.login-logo{
+  width:72px;height:72px;
+  background:rgba(255,255,255,.12);
+  border:2px solid rgba(255,255,255,.2);
+  border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+}
+.login-logo svg{width:36px;height:36px}
+
+.login-title{
+  font-size:20px;font-weight:700;color:var(--white);
+  text-align:center;margin-bottom:4px;
+}
+.login-sub{
+  font-size:12px;color:rgba(255,255,255,.55);
+  text-align:center;margin-bottom:32px;letter-spacing:.3px;
+}
+
+.login-card{
+  width:100%;max-width:380px;
+  background:var(--white);
+  border-radius:var(--r-xl);
+  padding:28px 24px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+
+.lc-label{
+  display:block;font-size:11px;font-weight:700;
+  color:var(--navy);text-transform:uppercase;
+  letter-spacing:.6px;margin-bottom:6px;margin-top:16px;
+}
+.lc-label:first-child{margin-top:0}
+
+.lc-input{
+  width:100%;padding:12px 14px;
+  background:var(--surface2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  font-family:var(--mono);font-size:16px;
+  color:var(--text);outline:none;
+  transition:border-color .15s;
+  letter-spacing:1px;
+}
+.lc-input:focus{border-color:var(--navy);background:var(--white)}
+.lc-input::placeholder{color:var(--text-4);font-family:var(--font);letter-spacing:0}
+.lc-input.error{border-color:var(--red);background:var(--red-l)}
+
+.lc-select{
+  width:100%;padding:12px 14px;
+  background:var(--surface2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  font-family:var(--font);font-size:14px;
+  color:var(--text);outline:none;
+  transition:border-color .15s;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7f99' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  padding-right:36px;
+}
+.lc-select:focus{border-color:var(--navy)}
+
+.lc-detected{
+  display:none;margin-top:6px;padding:8px 11px;
+  background:var(--green-l);border:1px solid var(--green-b);
+  border-radius:var(--r-sm);font-size:12px;color:var(--green);
+  font-weight:600;align-items:center;gap:6px;
+}
+.lc-detected.show{display:flex}
+
+.lc-error{
+  display:none;margin-top:6px;padding:8px 11px;
+  background:var(--red-l);border:1px solid var(--red-b);
+  border-radius:var(--r-sm);font-size:12px;color:var(--red);font-weight:600;
+}
+.lc-error.show{display:block}
+
+.login-btn{
+  width:100%;margin-top:20px;padding:15px;
+  background:var(--navy);color:var(--white);
+  border:none;border-radius:var(--r-sm);
+  font-family:var(--font);font-size:15px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+  box-shadow:0 4px 16px rgba(27,58,107,.3);
+  letter-spacing:.1px;
+}
+.login-btn:hover{background:var(--navy-d)}
+.login-btn:active{transform:scale(.99)}
+.login-btn:disabled{opacity:.6;pointer-events:none}
+
+.login-note{
+  margin-top:12px;font-size:11px;color:var(--text-4);
+  text-align:center;line-height:1.6;
+}
+
+/* ════ MAIN APP (hidden until login) ════ */
+#app{display:none}
+#app.show{display:block}
+
+/* ════ HEADER ════ */
+.header{
+  position:fixed;top:0;left:0;right:0;height:56px;
+  background:var(--navy);
+  display:flex;align-items:center;padding:0 16px;
+  z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+.header-emblem{
+  width:32px;height:32px;background:var(--white);
+  border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.header-emblem svg{width:18px;height:18px}
+.header-wordmark{margin-left:10px}
+.header-title{font-size:13px;font-weight:700;color:var(--white);line-height:1.2}
+.header-sub{font-size:9.5px;color:rgba(255,255,255,.55);line-height:1.2}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.header-counters{
+  display:flex;align-items:center;gap:2px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
+  border-radius:var(--r-sm);padding:5px 8px;
+}
+.hcnt{display:flex;align-items:center;gap:4px;padding:0 6px;border-right:1px solid rgba(255,255,255,.12)}
+.hcnt:last-child{border-right:none}
+.hcnt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hcnt-n{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--white)}
+.user-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  border-radius:var(--r-sm);cursor:pointer;
+}
+.user-av{
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(255,255,255,.9);color:var(--navy);
+  font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.user-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.85);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ════ STATUS BAR ════ */
+.status-bar{
+  position:fixed;top:56px;left:0;right:0;height:38px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;gap:8px;
+  z-index:990;box-shadow:var(--sh-xs);
+}
+.sb-live{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:var(--green)}
+.sb-live-dot{width:7px;height:7px;border-radius:50%;background:var(--green-m);animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+.sb-sep{width:1px;height:16px;background:var(--divider)}
+.sb-modes{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.sb-mode-btn{
+  padding:5px 10px;font-family:var(--font);font-size:10.5px;font-weight:600;
+  color:var(--text-3);background:none;border:none;border-right:1px solid var(--border);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.sb-mode-btn:last-child{border-right:none}
+.sb-mode-btn.active{background:var(--navy);color:var(--white)}
+.sb-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.sb-pts{
+  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy);
+  background:var(--navy-xl);border:1px solid var(--navy-l);
+  border-radius:var(--r-sm);padding:4px 10px;
+}
+
+/* ════ MAP ════ */
+#map{position:fixed;top:94px;left:0;right:0;bottom:60px;z-index:1}
+.leaflet-container{font-family:var(--font)!important}
+.leaflet-popup-content-wrapper{border-radius:var(--r)!important;box-shadow:var(--sh-md)!important;border:1px solid var(--border)!important;padding:0!important}
+.leaflet-popup-content{margin:0!important}
+.leaflet-popup-tip-container{display:none}
+
+/* ════ MAP OVERLAY ════ */
+.map-legend{
+  position:fixed;bottom:70px;left:12px;
+  background:rgba(255,255,255,.95);border:1px solid var(--border);
+  border-radius:var(--r);padding:10px 12px;z-index:500;
+  backdrop-filter:blur(8px);box-shadow:var(--sh-md);
+}
+.leg-title{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+.leg-row{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:11px;font-weight:500;color:var(--text-2)}
+.leg-row:last-child{margin-bottom:0}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.map-fabs{position:fixed;right:12px;bottom:70px;display:flex;flex-direction:column;gap:8px;z-index:500}
+.map-fab{
+  width:44px;height:44px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:var(--sh-md);transition:all .15s;
+  font-size:17px;color:var(--text-2);
+}
+.map-fab:active{transform:scale(.95)}
+.map-fab-report{
+  width:50px;height:50px;background:var(--navy);border-color:var(--navy-d);
+  color:var(--white);border-radius:var(--r);
+  box-shadow:0 4px 16px rgba(27,58,107,.35);
+}
+
+/* ════ BOTTOM NAV ════ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:60px;
+  background:var(--surface);border-top:1.5px solid var(--border);
+  display:flex;z-index:1000;box-shadow:0 -2px 12px rgba(27,58,107,.07);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;background:none;border:none;
+  cursor:pointer;font-family:var(--font);font-size:9.5px;font-weight:600;
+  color:var(--text-4);transition:all .15s;position:relative;
+}
+.nav-item.active{color:var(--navy)}
+.nav-item.active::after{
+  content:'';position:absolute;top:0;left:25%;right:25%;
+  height:2px;background:var(--navy);border-radius:0 0 2px 2px;
+}
+.nav-icon{width:28px;height:22px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.nav-item.active .nav-icon{transform:translateY(-1px)}
+.nav-center{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;background:none;border:none;
+  cursor:pointer;font-family:var(--font);font-size:9.5px;font-weight:700;color:var(--navy);
+}
+.nav-center-icon{
+  width:42px;height:34px;background:var(--navy);border-radius:var(--r-sm);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--white);font-size:18px;margin-top:-10px;
+  box-shadow:0 2px 10px rgba(27,58,107,.3);
+}
+
+/* ════ OVERLAY & PANEL ════ */
+.overlay{
+  position:fixed;inset:0;background:rgba(10,18,35,.45);
+  z-index:1500;opacity:0;pointer-events:none;
+  transition:opacity .3s ease;backdrop-filter:blur(2px);
+}
+.overlay.open{opacity:1;pointer-events:all}
+.panel{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;
+  z-index:1600;transform:translateY(100%);
+  transition:transform .38s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;max-height:93vh;
+  box-shadow:var(--sh-panel);border-top:1px solid var(--border);
+}
+.panel.open{transform:translateY(0)}
+.panel-handle-wrap{display:flex;justify-content:center;padding:10px 0 0;flex-shrink:0}
+.panel-handle{width:38px;height:4px;background:var(--border2);border-radius:2px}
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px 8px;border-bottom:1px solid var(--divider);flex-shrink:0;
+}
+.ph-left{display:flex;align-items:center;gap:10px}
+.ph-icon{
+  width:34px;height:34px;background:var(--navy-xl);border:1px solid var(--navy-l);
+  border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.panel-title{font-size:15px;font-weight:700;color:var(--text);line-height:1.2}
+.panel-subtitle{font-size:11px;color:var(--text-3);font-weight:400;margin-top:1px}
+.panel-close{
+  width:30px;height:30px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:13px;color:var(--text-3);transition:all .15s;flex-shrink:0;
+}
+.panel-close:hover{background:var(--surface3);color:var(--text)}
+.panel-body{
+  flex:1;overflow-y:auto;padding:0 18px 160px;
+  -webkit-overflow-scrolling:touch;scroll-behavior:smooth;
+}
+.panel-body::-webkit-scrollbar{display:none}
+
+/* ════ STEPPER ════ */
+.wizard-stepper{padding:14px 18px 0;flex-shrink:0}
+.step-track{display:flex;align-items:center;margin-bottom:8px}
+.step-node{
+  display:flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  flex-shrink:0;transition:all .25s;
+  border:2px solid var(--border2);background:var(--surface);color:var(--text-3);z-index:1;
+}
+.step-node.done{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.step-node.active{background:var(--navy);border-color:var(--navy);color:var(--white);box-shadow:0 0 0 4px rgba(27,58,107,.12)}
+.step-connector{flex:1;height:2px;background:var(--border);margin:0 4px;transition:background .3s;border-radius:1px}
+.step-connector.done{background:var(--navy)}
+.step-info{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--divider)}
+.step-label-txt{font-size:12px;font-weight:700;color:var(--navy);letter-spacing:.1px}
+.step-counter-txt{font-family:var(--mono);font-size:11px;color:var(--text-4);font-weight:500}
+
+/* ════ FORM COMPONENTS ════ */
+.field-sect{margin-top:18px;margin-bottom:9px}
+.field-label{display:block;font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
+.field-req{color:var(--red);margin-left:3px}
+.field-desc{font-size:11.5px;color:var(--text-3);font-weight:400;line-height:1.4}
+
+/* Event type big rows */
+.event-opts{display:flex;flex-direction:column;gap:8px}
+.event-opt{
+  display:flex;align-items:center;gap:14px;padding:13px 14px;
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);
+  cursor:pointer;transition:all .15s;text-align:left;width:100%;font-family:var(--font);
+}
+.event-opt:active{transform:scale(.99)}
+.ev-icon{width:40px;height:40px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ev-text{flex:1}
+.ev-title{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ev-desc{font-size:11.5px;color:var(--text-3);line-height:1.35}
+.ev-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all .15s}
+
+.event-opt[data-sev=accident]{border-left:4px solid var(--red-m)}
+.event-opt[data-sev=frequent]{border-left:4px solid var(--amber-m)}
+.event-opt[data-sev=near]{border-left:4px solid var(--green-m)}
+.event-opt[data-sev=observe]{border-left:4px solid var(--navy-m)}
+.event-opt[data-sev=accident] .ev-icon{background:var(--red-l)}
+.event-opt[data-sev=frequent] .ev-icon{background:var(--amber-l)}
+.event-opt[data-sev=near] .ev-icon{background:var(--green-l)}
+.event-opt[data-sev=observe] .ev-icon{background:var(--navy-xl)}
+.event-opt.sel[data-sev=accident]{background:var(--red-l);border-color:var(--red-m);border-left:4px solid var(--red)}
+.event-opt.sel[data-sev=frequent]{background:var(--amber-l);border-color:var(--amber-m);border-left:4px solid var(--amber)}
+.event-opt.sel[data-sev=near]{background:var(--green-l);border-color:var(--green-m);border-left:4px solid var(--green)}
+.event-opt.sel[data-sev=observe]{background:var(--navy-xl);border-color:var(--navy-m);border-left:4px solid var(--navy)}
+.event-opt.sel .ev-radio{background:var(--navy);border-color:var(--navy)}
+
+.injury-sub{display:none;margin-top:14px;padding:14px;background:var(--red-l);border:1px solid var(--red-b);border-radius:var(--r)}
+.injury-sub.show{display:block}
+
+/* Grid options */
+.opts-2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.opts-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.opts-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
+.opt-card{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:11px 6px 9px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-sm);cursor:pointer;transition:all .13s;
+  font-family:var(--font);font-size:11.5px;font-weight:500;color:var(--text-2);
+  text-align:center;line-height:1.25;-webkit-user-select:none;user-select:none;
+}
+.opt-icon{font-size:22px;line-height:1}
+.opt-card:active{transform:scale(.97)}
+.opt-card.sel{border-color:var(--navy);background:var(--navy-xl);color:var(--navy);font-weight:700}
+
+/* Pill row */
+.pill-row{display:flex;flex-wrap:wrap;gap:6px}
+.pill-opt{
+  display:flex;align-items:center;gap:5px;padding:7px 12px;
+  background:var(--surface);border:1.5px solid var(--border);border-radius:100px;
+  cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;color:var(--text-2);
+  transition:all .13s;white-space:nowrap;-webkit-user-select:none;user-select:none;
+}
+.pill-opt:active{transform:scale(.97)}
+.pill-opt.sel{background:var(--navy);border-color:var(--navy);color:var(--white);font-weight:600}
+
+/* GPS row */
+.gps-row{display:flex;gap:8px;align-items:stretch}
+.gps-btn{
+  display:flex;align-items:center;gap:7px;padding:10px 14px;
+  background:var(--blue-l);border:1.5px solid var(--blue-b);border-radius:var(--r-sm);
+  color:var(--blue);font-family:var(--font);font-size:12.5px;font-weight:700;
+  cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;
+}
+.gps-btn:active{background:#dbeafe}
+.gps-btn.loading{opacity:.7;pointer-events:none}
+.coord-box{
+  flex:1;padding:9px 12px;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:var(--r-sm);font-family:var(--mono);font-size:11px;color:var(--text-4);
+  display:flex;align-items:center;gap:6px;min-width:0;
+}
+.coord-box.set{border-color:var(--green-m);color:var(--green);background:var(--green-l)}
+.coord-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.map-hint{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:var(--text-4);padding:5px 0}
+
+/* Inputs */
+.form-input{
+  width:100%;padding:10px 13px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-sm);color:var(--text);font-family:var(--font);font-size:14px;
+  outline:none;transition:border-color .15s;
+}
+.form-input:focus{border-color:var(--navy)}
+.form-input::placeholder{color:var(--text-4)}
+.form-ta{
+  width:100%;padding:10px 13px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-sm);color:var(--text);font-family:var(--font);font-size:14px;
+  outline:none;resize:none;min-height:88px;line-height:1.6;transition:border-color .15s;
+}
+.form-ta:focus{border-color:var(--navy)}
+.form-ta::placeholder{color:var(--text-4)}
+
+/* Photo */
+.photo-zone{
+  border:2px dashed var(--border2);border-radius:var(--r);padding:22px 16px;
+  text-align:center;cursor:pointer;background:var(--surface2);transition:all .2s;
+}
+.photo-zone:hover{border-color:var(--navy);background:var(--navy-xl)}
+.photo-zone input{display:none}
+.pz-icon{font-size:28px;margin-bottom:6px;opacity:.6}
+.pz-title{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:3px}
+.pz-sub{font-size:11px;color:var(--text-4)}
+.photo-previews{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.photo-thumb{width:68px;height:68px;border-radius:var(--r-sm);object-fit:cover;border:2px solid var(--border)}
+
+.form-div{height:1px;background:var(--divider);margin:16px 0}
+
+/* Wizard footer */
+.wiz-footer{
+  position:fixed;bottom:60px;left:0;right:0;
+  padding:10px 18px;background:var(--surface);border-top:1px solid var(--divider);
+  display:none;gap:10px;z-index:1700;box-shadow:0 -2px 8px rgba(27,58,107,.06);
+}
+.wiz-footer.active{display:flex}
+.wf-back{
+  padding:13px 18px;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:var(--r-sm);font-family:var(--font);font-size:13.5px;font-weight:600;
+  color:var(--text-2);cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+.wf-back:hover{background:var(--surface3)}
+.wf-next{
+  flex:1;padding:13px;background:var(--navy);border:none;border-radius:var(--r-sm);
+  font-family:var(--font);font-size:13.5px;font-weight:700;color:var(--white);
+  cursor:pointer;transition:all .15s;box-shadow:0 2px 10px rgba(27,58,107,.25);
+}
+.wf-next:hover{background:var(--navy-d)}
+.wf-next:active{transform:scale(.99)}
+.wf-next.submit{background:var(--green);box-shadow:0 2px 10px rgba(26,122,74,.25)}
+.wf-next.loading{opacity:.7;pointer-events:none}
+
+/* ════ FULL VIEWS ════ */
+.full-view{
+  position:fixed;inset:0;top:94px;bottom:60px;
+  background:var(--bg);z-index:800;
+  display:none;flex-direction:column;overflow:hidden;
+}
+.full-view.open{display:flex}
+.fv-head{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px 10px;flex-shrink:0}
+.fv-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.fv-title{font-size:15px;font-weight:700;color:var(--text)}
+.fv-badge{font-family:var(--mono);font-size:11px;font-weight:600;background:var(--navy);color:var(--white);padding:3px 10px;border-radius:100px}
+.filter-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.filter-chips::-webkit-scrollbar{display:none}
+.fchip{
+  padding:5px 13px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:100px;font-family:var(--font);font-size:11.5px;font-weight:600;
+  color:var(--text-3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .13s;
+}
+.fchip.active{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.fv-body{flex:1;overflow-y:auto;padding:12px 14px 16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fv-body::-webkit-scrollbar{display:none}
+
+/* Report cards */
+.rcard{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-bottom:8px;
+  cursor:pointer;transition:all .13s;box-shadow:var(--sh-xs);
+}
+.rcard:active{transform:scale(.99)}
+.rc-bar{height:3px;width:100%}
+.rc-body{padding:11px 13px 10px}
+.rc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.rc-type{font-size:13px;font-weight:700;color:var(--text)}
+.rc-sev{font-size:10px;font-weight:700;padding:2px 9px;border-radius:100px;white-space:nowrap;flex-shrink:0}
+.rc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.rc-tag{font-size:10px;padding:2px 7px;border-radius:3px;background:var(--surface2);border:1px solid var(--border);color:var(--text-3);font-weight:500}
+.rc-desc{font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rc-foot{display:flex;align-items:center;gap:10px;font-size:10.5px;color:var(--text-4)}
+.rc-vote{
+  margin-left:auto;display:flex;align-items:center;gap:4px;
+  padding:4px 10px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:100px;font-family:var(--font);font-size:11px;font-weight:600;color:var(--text-3);cursor:pointer;transition:all .13s;
+}
+.rc-vote.voted{background:var(--navy-xl);border-color:var(--navy-l);color:var(--navy)}
+
+/* ════ PROFILE PANEL ════ */
+.prof-card{background:var(--navy);border-radius:var(--r);padding:18px;color:var(--white);margin-bottom:16px;position:relative;overflow:hidden}
+.prof-card::before{content:'';position:absolute;right:-24px;top:-24px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.04)}
+.pc-name{font-size:17px;font-weight:700;margin-bottom:2px}
+.pc-code{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.5);margin-bottom:2px}
+.pc-faculty{font-size:11px;color:rgba(255,255,255,.6);margin-bottom:16px}
+.pc-level{font-size:11px;color:rgba(255,255,255,.6)}
+.pc-stats{display:flex;gap:20px;margin-bottom:0}
+.pcs-n{font-family:var(--mono);font-size:22px;font-weight:700;color:#fbbf24}
+.pcs-l{font-size:10px;color:rgba(255,255,255,.55);margin-top:1px}
+.pc-xp-bar{height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:14px 0 5px;overflow:hidden}
+.pc-xp-fill{height:100%;background:#fbbf24;border-radius:2px;transition:width .6s ease}
+.pc-xp-lbl{font-size:10px;color:rgba(255,255,255,.5)}
+.badge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.badge-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 4px;text-align:center}
+.badge-card.earned{background:var(--navy-xl);border-color:var(--navy-l)}
+.badge-card.locked{opacity:.35}
+.badge-icon{font-size:26px;display:block;margin-bottom:4px}
+.badge-name{font-size:9.5px;font-weight:600;color:var(--text-3);line-height:1.2}
+.badge-card.earned .badge-name{color:var(--navy)}
+.pts-table{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.pts-row{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-bottom:1px solid var(--divider);font-size:12.5px}
+.pts-row:last-child{border-bottom:none}
+.pts-val{font-family:var(--mono);font-weight:700;color:var(--navy);font-size:12px}
+
+/* Leaderboard */
+.lb-card{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;box-shadow:var(--sh-xs)}
+.lb-rank{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-3);width:28px;text-align:center;flex-shrink:0}
+.lb-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--white);flex-shrink:0}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-sub{font-size:10.5px;color:var(--text-4)}
+.lb-pts{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--navy)}
+
+/* Map popup */
+.map-popup{padding:13px 14px;min-width:220px;max-width:270px}
+.mp-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mp-sev-bar{width:4px;border-radius:2px;align-self:stretch;flex-shrink:0}
+.mp-title{font-size:13px;font-weight:700;color:var(--text)}
+.mp-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-bottom:6px}
+.mp-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px}
+.mp-tag{font-size:10px;padding:2px 7px;border-radius:3px;background:var(--surface2);border:1px solid var(--border);color:var(--text-3)}
+.mp-desc{font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:6px}
+.mp-meta{font-size:10.5px;color:var(--text-4)}
+
+/* Section heading */
+.sec-head{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:76px;left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:var(--navy);color:var(--white);padding:10px 20px;
+  border-radius:100px;font-size:13px;font-weight:600;white-space:nowrap;
+  z-index:9999;opacity:0;pointer-events:none;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 4px 20px rgba(27,58,107,.25);max-width:90vw;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red)}
+.toast.ok{background:var(--green)}
+
+/* Misc */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;color:var(--text-4);text-align:center}
+.empty-ico{font-size:40px;margin-bottom:12px;opacity:.35}
+.empty-txt{font-size:13px}
+@keyframes slide-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.anim-in{animation:slide-up .22s ease both}
+
+/* Step pages */
+.step-page{display:none}
+.step-page.active{display:block}
+
+/* login step pages */
+.login-step{display:none}
+.login-step.active{display:block;animation:slide-up .25s ease both}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
-     HEADER
+<!-- ════════════════════════════════════════
+     LOGIN SCREEN
 ════════════════════════════════════════ -->
-<header class="header">
-  <div class="header-logo">
-    <div class="header-emblem">
-      <!-- Road warning triangle SVG -->
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="none" stroke="#1b3a6b" stroke-width="2" stroke-linejoin="round"/>
-        <line x1="12" y1="9" x2="12" y2="13" stroke="#1b3a6b" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="12" cy="17" r="1" fill="#1b3a6b"/>
-      </svg>
-    </div>
-    <div class="header-wordmark">
-      <div class="header-title">ระบบรายงานจุดเสี่ยงทางถนน</div>
-      <div class="header-sub">SafeRoad TH — Road Hazard Reporting System</div>
-    </div>
+<div id="login-screen">
+  <div class="login-logo">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="12" y1="9" x2="12" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="17" r="1" fill="white"/>
+    </svg>
   </div>
-  <div class="header-counters">
-    <div class="hcnt">
-      <div class="hcnt-dot" style="background:#c0392b"></div>
-      <span class="hcnt-n" id="h-accident">0</span>
-      <span class="hcnt-label">อุบัติเหตุ</span>
+  <div class="login-title">SafeRoad TH</div>
+  <div class="login-sub">ระบบรายงานจุดเสี่ยงทางถนน<br>Road Hazard Reporting System</div>
+
+  <div class="login-card">
+    <label class="lc-label">รหัสนักศึกษา <span style="color:var(--red)">*</span></label>
+    <input
+      class="lc-input"
+      id="inp-student-id"
+      type="text"
+      inputmode="numeric"
+      maxlength="10"
+      placeholder="เช่น 6812207001"
+      oninput="onStudentIdInput(this)"
+      onblur="validateStudentId()"
+    >
+    <div class="lc-detected" id="faculty-detected">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span id="faculty-detected-text"></span>
     </div>
-    <div class="hcnt">
-      <div class="hcnt-dot" style="background:#e67e22"></div>
-      <span class="hcnt-n" id="h-frequent">0</span>
-      <span class="hcnt-label">เกิดบ่อย</span>
+    <div class="lc-error" id="id-error"></div>
+
+    <label class="lc-label" style="margin-top:14px">คณะ / หน่วยงาน <span style="color:var(--red)">*</span></label>
+    <select class="lc-select" id="sel-faculty">
+      <option value="">— เลือกคณะ —</option>
+      <option value="01">คณะครุศาสตร์</option>
+      <option value="02">คณะมนุษยศาสตร์และสังคมศาสตร์</option>
+      <option value="03">คณะวิทยาการจัดการ</option>
+      <option value="04">คณะวิทยาศาสตร์และเทคโนโลยี</option>
+      <option value="05">คณะเทคโนโลยีการเกษตรและอาหาร</option>
+      <option value="06">คณะเทคโนโลยีอุตสาหกรรม</option>
+      <option value="07">คณะสังคมศาสตร์และการพัฒนาท้องถิ่น</option>
+      <option value="08">คณะพยาบาลศาสตร์</option>
+      <option value="09">บุคลากร / อาจารย์</option>
+      <option value="99">ประชาชนทั่วไป</option>
+    </select>
+    <div class="lc-error" id="faculty-error"></div>
+
+    <label class="lc-label" style="margin-top:14px">ชื่อ-นามสกุล <span style="font-weight:400;color:var(--text-4)">(ไม่บังคับ)</span></label>
+    <input class="lc-input" id="inp-fullname" type="text" placeholder="ชื่อ นามสกุล" style="font-family:var(--font);letter-spacing:0;font-size:14px">
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="login-note">ข้อมูลของท่านจะถูกใช้เฉพาะเพื่อการวิจัยความปลอดภัยทางถนน<br>และจะได้รับการปกป้องตามนโยบายความเป็นส่วนตัว</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════ -->
+<div id="app">
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-emblem">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#1b3a6b" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="12" y1="9" x2="12" y2="13" stroke="#1b3a6b" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="17" r="1" fill="#1b3a6b"/>
+    </svg>
+  </div>
+  <div class="header-wordmark">
+    <div class="header-title">ระบบรายงานจุดเสี่ยงทางถนน</div>
+    <div class="header-sub">SafeRoad TH — Road Hazard Reporting System</div>
+  </div>
+  <div class="header-right">
+    <div class="header-counters">
+      <div class="hcnt"><div class="hcnt-dot" style="background:#c0392b"></div><span class="hcnt-n" id="h-a">0</span></div>
+      <div class="hcnt"><div class="hcnt-dot" style="background:#e67e22"></div><span class="hcnt-n" id="h-f">0</span></div>
+      <div class="hcnt"><div class="hcnt-dot" style="background:#27ae60"></div><span class="hcnt-n" id="h-n">0</span></div>
     </div>
-    <div class="hcnt">
-      <div class="hcnt-dot" style="background:#27ae60"></div>
-      <span class="hcnt-n" id="h-near">0</span>
-      <span class="hcnt-label">เกือบเกิด</span>
+    <div class="user-pill" onclick="openPanel('profile')">
+      <div class="user-av" id="hdr-av">?</div>
+      <span class="user-name" id="hdr-name">—</span>
     </div>
   </div>
 </header>
 
-<!-- ═══════════════════════════════════════
-     STATUS BAR
-════════════════════════════════════════ -->
+<!-- STATUS BAR -->
 <div class="status-bar">
-  <div class="sb-live">
-    <div class="sb-live-dot"></div>
-    ข้อมูล live
-  </div>
-  <div class="sb-separator"></div>
-  <div class="sb-mode-btns">
-    <button class="sb-mode-btn active" id="mb-pin"     onclick="setMapMode('pin')">แสดงจุด</button>
-    <button class="sb-mode-btn"        id="mb-heat"    onclick="setMapMode('heat')">ความหนาแน่น</button>
-    <button class="sb-mode-btn"        id="mb-cluster" onclick="setMapMode('cluster')">จัดกลุ่ม</button>
+  <div class="sb-live"><div class="sb-live-dot"></div>ข้อมูลสด</div>
+  <div class="sb-sep"></div>
+  <div class="sb-modes">
+    <button class="sb-mode-btn active" id="mb-pin" onclick="setMapMode('pin')">แสดงจุด</button>
+    <button class="sb-mode-btn" id="mb-heat" onclick="setMapMode('heat')">ความหนาแน่น</button>
+    <button class="sb-mode-btn" id="mb-cluster" onclick="setMapMode('cluster')">จัดกลุ่ม</button>
   </div>
   <div class="sb-right">
-    <div class="sb-user-btn" onclick="openPanel('profile')">
-      <div class="sb-user-avatar" id="hdr-avatar">?</div>
-      <span class="sb-user-pts" id="hdr-pts">0 คะแนน</span>
-    </div>
+    <div class="sb-pts" id="hdr-pts">0 คะแนน</div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     MAP
-════════════════════════════════════════ -->
+<!-- MAP -->
 <div id="map"></div>
 
-<!-- Map FABs -->
-<div class="map-fab-group">
-  <button class="map-fab" onclick="doGPS()" title="ไปยังตำแหน่งปัจจุบัน">
+<div class="map-fabs">
+  <button class="map-fab" onclick="doGPS()" title="ตำแหน่งปัจจุบัน">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
       <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
       <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
     </svg>
   </button>
-  <button class="map-fab map-fab-report" onclick="openReportPanel()" title="รายงานจุดเสี่ยงใหม่">
+  <button class="map-fab map-fab-report" onclick="openReportPanel()">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
     </svg>
   </button>
 </div>
 
-<!-- Map Legend -->
 <div class="map-legend">
-  <div class="legend-title">คำอธิบายสัญลักษณ์</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#c0392b"></div>เกิดอุบัติเหตุแล้ว</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#e67e22"></div>จุดเกิดบ่อย / เสี่ยงสูง</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#27ae60"></div>เกือบเกิดอุบัติเหตุ</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#2563eb"></div>สังเกตเห็นจุดเสี่ยง</div>
+  <div class="leg-title">คำอธิบายสัญลักษณ์</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#c0392b"></div>เกิดอุบัติเหตุแล้ว</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#e67e22"></div>จุดเกิดบ่อย / เสี่ยงสูง</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#27ae60"></div>เกือบเกิดอุบัติเหตุ</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#2563eb"></div>สังเกตเห็นจุดเสี่ยง</div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     BOTTOM NAVIGATION
-════════════════════════════════════════ -->
+<!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="nav-item active" id="ni-map" onclick="showView('map', this)">
-    <div class="nav-icon">🗺️</div>
-    แผนที่
+  <button class="nav-item active" id="ni-map" onclick="showView('map',this)">
+    <div class="nav-icon">🗺️</div>แผนที่
   </button>
-  <button class="nav-item" id="ni-list" onclick="showView('list', this)">
-    <div class="nav-icon">📋</div>
-    รายงาน
+  <button class="nav-item" id="ni-list" onclick="showView('list',this)">
+    <div class="nav-icon">📋</div>รายงาน
   </button>
-  <button class="nav-center-btn" onclick="openReportPanel()">
+  <button class="nav-center" onclick="openReportPanel()">
     <div class="nav-center-icon">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -1743,70 +757,57 @@ body {
     </div>
     รายงาน
   </button>
-  <button class="nav-item" id="ni-rank" onclick="showView('rank', this)">
-    <div class="nav-icon">🏆</div>
-    อันดับ
+  <button class="nav-item" id="ni-rank" onclick="showView('rank',this)">
+    <div class="nav-icon">🏆</div>อันดับ
   </button>
-  <button class="nav-item" id="ni-profile" onclick="openPanel('profile')">
-    <div class="nav-icon">👤</div>
-    โปรไฟล์
+  <button class="nav-item" id="ni-prof" onclick="openPanel('profile')">
+    <div class="nav-icon">👤</div>โปรไฟล์
   </button>
 </nav>
 
-<!-- ═══════════════════════════════════════
-     FULL VIEWS
-════════════════════════════════════════ -->
-
-<!-- LIST VIEW -->
+<!-- ════ LIST VIEW ════ -->
 <div class="full-view" id="fv-list">
-  <div class="fv-header">
+  <div class="fv-head">
     <div class="fv-title-row">
       <span class="fv-title">รายงานจุดเสี่ยงทั้งหมด</span>
-      <span class="fv-badge" id="list-count">0 รายการ</span>
+      <span class="fv-badge" id="list-count">0</span>
     </div>
     <div class="filter-chips">
-      <button class="filter-chip active" onclick="filterList('all',this)">ทั้งหมด</button>
-      <button class="filter-chip" onclick="filterList('accident',this)">เกิดอุบัติเหตุ</button>
-      <button class="filter-chip" onclick="filterList('frequent',this)">เกิดบ่อย</button>
-      <button class="filter-chip" onclick="filterList('near',this)">เกือบเกิดอุบัติเหตุ</button>
-      <button class="filter-chip" onclick="filterList('observe',this)">สังเกตเห็น</button>
+      <button class="fchip active" onclick="filterList('all',this)">ทั้งหมด</button>
+      <button class="fchip" onclick="filterList('accident',this)">🔴 อุบัติเหตุ</button>
+      <button class="fchip" onclick="filterList('frequent',this)">🟡 เกิดบ่อย</button>
+      <button class="fchip" onclick="filterList('near',this)">🟢 เกือบเกิด</button>
+      <button class="fchip" onclick="filterList('observe',this)">🔵 สังเกตเห็น</button>
     </div>
   </div>
   <div class="fv-body" id="list-body"></div>
 </div>
 
-<!-- RANK VIEW -->
+<!-- ════ RANK VIEW ════ -->
 <div class="full-view" id="fv-rank">
-  <div class="fv-header">
-    <div class="fv-title-row">
-      <span class="fv-title">อันดับผู้มีส่วนร่วม</span>
-    </div>
+  <div class="fv-head">
+    <div class="fv-title-row"><span class="fv-title">อันดับผู้มีส่วนร่วม</span></div>
   </div>
   <div class="fv-body">
-    <div style="background:var(--navy);border-radius:var(--r);padding:18px;margin-bottom:16px;color:var(--white);">
-      <div style="font-size:10px;color:rgba(255,255,255,0.55);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px">จุดเสี่ยงที่บันทึกในระบบ</div>
+    <div style="background:var(--navy);border-radius:var(--r);padding:18px;margin-bottom:16px;color:var(--white)">
+      <div style="font-size:10px;color:rgba(255,255,255,.55);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.6px">จุดเสี่ยงในระบบ</div>
       <div style="font-size:32px;font-weight:700;font-family:var(--mono);color:#fbbf24" id="rank-total">0</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px">จุดทั่วพื้นที่</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:4px">จุดทั่วพื้นที่</div>
     </div>
-    <div class="section-heading">ลำดับผู้รายงาน</div>
+    <div class="sec-head">ลำดับผู้รายงาน</div>
     <div id="lb-body"></div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     OVERLAY
-════════════════════════════════════════ -->
+<!-- OVERLAY -->
 <div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
 
-<!-- ═══════════════════════════════════════
-     PANEL: REPORT WIZARD
-════════════════════════════════════════ -->
+<!-- ════ PANEL: REPORT WIZARD ════ -->
 <div class="panel" id="panel-report">
   <div class="panel-handle-wrap"><div class="panel-handle"></div></div>
-
   <div class="panel-header">
-    <div class="panel-header-left">
-      <div class="panel-header-icon">
+    <div class="ph-left">
+      <div class="ph-icon">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1b3a6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="1" fill="#1b3a6b" stroke="none"/>
@@ -1834,84 +835,60 @@ body {
       <div class="step-node" id="sn-5">5</div>
     </div>
     <div class="step-info">
-      <span class="step-label-current" id="step-label">ประเภทและความรุนแรงของเหตุการณ์</span>
-      <span class="step-counter" id="step-counter">1 / 5</span>
+      <span class="step-label-txt" id="step-lbl">ประเภทและความรุนแรงของเหตุการณ์</span>
+      <span class="step-counter-txt" id="step-ctr">1 / 5</span>
     </div>
   </div>
 
   <div class="panel-body">
 
-    <!-- ░░░░ STEP 1: ประเภทเหตุการณ์ ░░░░ -->
+    <!-- ░ STEP 1: ประเภทเหตุการณ์ ░ -->
     <div class="step-page active" id="sp-1">
-      <div class="field-section">
-        <label class="field-label">ลักษณะเหตุการณ์<span class="req">*</span></label>
+      <div class="field-sect">
+        <label class="field-label">ลักษณะเหตุการณ์<span class="field-req">*</span></label>
         <div class="field-desc">เลือกประเภทที่ตรงกับสิ่งที่พบเห็นมากที่สุด</div>
       </div>
-
-      <div class="event-options">
-        <button class="event-opt" data-sev="accident" onclick="selectEventType(this)">
-          <div class="event-opt-icon">🚨</div>
-          <div class="event-opt-text">
-            <div class="event-opt-title">เกิดอุบัติเหตุแล้ว</div>
-            <div class="event-opt-desc">มีความเสียหาย การบาดเจ็บ หรือเสียชีวิตเกิดขึ้น</div>
-          </div>
-          <div class="event-opt-badge" style="border-color:#c0392b"></div>
+      <div class="event-opts">
+        <button class="event-opt" data-sev="accident" onclick="selEventType(this)">
+          <div class="ev-icon">🚨</div>
+          <div class="ev-text"><div class="ev-title">เกิดอุบัติเหตุแล้ว</div><div class="ev-desc">มีความเสียหาย การบาดเจ็บ หรือเสียชีวิตเกิดขึ้น</div></div>
+          <div class="ev-radio" style="border-color:#c0392b"></div>
         </button>
-        <button class="event-opt" data-sev="frequent" onclick="selectEventType(this)">
-          <div class="event-opt-icon">⚠️</div>
-          <div class="event-opt-text">
-            <div class="event-opt-title">จุดนี้เกิดเหตุบ่อยครั้ง</div>
-            <div class="event-opt-desc">ทราบว่ามีอุบัติเหตุหรือเหตุการณ์เกิดขึ้นซ้ำในพื้นที่นี้</div>
-          </div>
-          <div class="event-opt-badge" style="border-color:#e67e22"></div>
+        <button class="event-opt" data-sev="frequent" onclick="selEventType(this)">
+          <div class="ev-icon">⚠️</div>
+          <div class="ev-text"><div class="ev-title">จุดนี้เกิดเหตุบ่อยครั้ง</div><div class="ev-desc">ทราบว่ามีอุบัติเหตุเกิดขึ้นซ้ำในพื้นที่นี้</div></div>
+          <div class="ev-radio" style="border-color:#e67e22"></div>
         </button>
-        <button class="event-opt" data-sev="near" onclick="selectEventType(this)">
-          <div class="event-opt-icon">⚡</div>
-          <div class="event-opt-text">
-            <div class="event-opt-title">เกือบเกิดอุบัติเหตุ</div>
-            <div class="event-opt-desc">เฉียดอุบัติเหตุ ไม่มีความเสียหาย แต่เป็นสัญญาณเตือน</div>
-          </div>
-          <div class="event-opt-badge" style="border-color:#27ae60"></div>
+        <button class="event-opt" data-sev="near" onclick="selEventType(this)">
+          <div class="ev-icon">⚡</div>
+          <div class="ev-text"><div class="ev-title">เกือบเกิดอุบัติเหตุ</div><div class="ev-desc">เฉียดอุบัติเหตุ ไม่มีความเสียหาย แต่เป็นสัญญาณเตือน</div></div>
+          <div class="ev-radio" style="border-color:#27ae60"></div>
         </button>
-        <button class="event-opt" data-sev="observe" onclick="selectEventType(this)">
-          <div class="event-opt-icon">👁️</div>
-          <div class="event-opt-text">
-            <div class="event-opt-title">สังเกตเห็นจุดเสี่ยง</div>
-            <div class="event-opt-desc">พบว่าสภาพถนนหรือสิ่งแวดล้อมมีความเสี่ยง ยังไม่เกิดเหตุ</div>
-          </div>
-          <div class="event-opt-badge" style="border-color:#2563eb"></div>
+        <button class="event-opt" data-sev="observe" onclick="selEventType(this)">
+          <div class="ev-icon">👁️</div>
+          <div class="ev-text"><div class="ev-title">สังเกตเห็นจุดเสี่ยง</div><div class="ev-desc">สภาพถนนหรือสิ่งแวดล้อมมีความเสี่ยง ยังไม่เกิดเหตุ</div></div>
+          <div class="ev-radio" style="border-color:#2563eb"></div>
         </button>
       </div>
-
-      <!-- ความรุนแรงของการบาดเจ็บ (แสดงเมื่อเลือก accident) -->
-      <div class="injury-section" id="injury-section">
-        <label class="field-label">ระดับความรุนแรงของการบาดเจ็บ<span class="req">*</span></label>
-        <div style="margin-top: 8px;">
+      <div class="injury-sub" id="injury-sub">
+        <label class="field-label" style="color:var(--red)">ระดับความรุนแรง<span class="field-req">*</span></label>
+        <div style="margin-top:8px">
           <div class="opts-2">
-            <button class="opt-card" data-f="injury" data-v="fatal" onclick="selSingle(this,'injury')">
-              <span class="opt-card-icon">💀</span>มีผู้เสียชีวิต
-            </button>
-            <button class="opt-card" data-f="injury" data-v="serious" onclick="selSingle(this,'injury')">
-              <span class="opt-card-icon">🏥</span>บาดเจ็บสาหัส<br><small style="font-size:10px;color:var(--text-4)">ต้องนอน รพ.</small>
-            </button>
-            <button class="opt-card" data-f="injury" data-v="minor" onclick="selSingle(this,'injury')">
-              <span class="opt-card-icon">🩹</span>บาดเจ็บเล็กน้อย
-            </button>
-            <button class="opt-card" data-f="injury" data-v="property" onclick="selSingle(this,'injury')">
-              <span class="opt-card-icon">💢</span>ทรัพย์สินเสียหาย<br><small style="font-size:10px;color:var(--text-4)">ไม่มีผู้บาดเจ็บ</small>
-            </button>
+            <button class="opt-card" data-f="injury" data-v="fatal" onclick="selSingle(this,'injury')"><span class="opt-icon">💀</span>มีผู้เสียชีวิต</button>
+            <button class="opt-card" data-f="injury" data-v="serious" onclick="selSingle(this,'injury')"><span class="opt-icon">🏥</span>บาดเจ็บสาหัส<br><small style="font-size:10px;color:var(--text-4)">ต้องนอน รพ.</small></button>
+            <button class="opt-card" data-f="injury" data-v="minor" onclick="selSingle(this,'injury')"><span class="opt-icon">🩹</span>บาดเจ็บเล็กน้อย</button>
+            <button class="opt-card" data-f="injury" data-v="property" onclick="selSingle(this,'injury')"><span class="opt-icon">💢</span>ทรัพย์สินเสียหาย</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ░░░░ STEP 2: ตำแหน่งและสถานที่ ░░░░ -->
+    <!-- ░ STEP 2: ตำแหน่ง + สถานที่ + ยานพาหนะ ░ -->
     <div class="step-page" id="sp-2">
-      <div class="field-section">
-        <label class="field-label">พิกัดสถานที่เกิดเหตุ<span class="req">*</span></label>
-        <div class="field-desc">ใช้ GPS หรือแตะบนแผนที่เพื่อระบุตำแหน่ง</div>
+      <div class="field-sect">
+        <label class="field-label">พิกัดสถานที่<span class="field-req">*</span></label>
+        <div class="field-desc">ใช้ GPS หรือแตะบนแผนที่ด้านหลัง</div>
       </div>
-
       <div class="gps-row">
         <button class="gps-btn" id="gps-btn" onclick="getGPS()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1921,235 +898,199 @@ body {
           </svg>
           ระบุตำแหน่ง GPS
         </button>
-        <div class="coord-display" id="coord-display">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <div class="coord-box" id="coord-box">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0">
             <circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 00-8 8c0 5 8 12 8 12s8-7 8-12a8 8 0 00-8-8z"/>
           </svg>
-          <span class="coord-text" id="coord-text">ยังไม่ได้ระบุตำแหน่ง</span>
+          <span class="coord-txt" id="coord-txt">ยังไม่ได้ระบุตำแหน่ง</span>
         </div>
       </div>
-      <div class="map-tap-hint">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-        </svg>
-        หรือแตะบนแผนที่ด้านหลังเพื่อปักหมุดตำแหน่ง
+      <div class="map-hint">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 00-8 8c0 5 8 12 8 12s8-7 8-12a8 8 0 00-8-8z"/></svg>
+        หรือแตะบนแผนที่เพื่อปักหมุดตำแหน่ง
       </div>
-
-      <div class="form-divider"></div>
-
-      <div class="field-section">
-        <label class="field-label">ลักษณะของสถานที่<span class="req">*</span></label>
-        <div class="field-desc">เลือกลักษณะทางกายภาพที่ตรงกับจุดเกิดเหตุ</div>
+      <div class="form-div"></div>
+      <div class="field-sect">
+        <label class="field-label">ลักษณะของสถานที่<span class="field-req">*</span></label>
       </div>
       <div class="opts-3">
-        <button class="opt-card" data-f="place" data-v="intersection" onclick="selSingle(this,'place')"><span class="opt-card-icon">🚦</span>สี่แยก</button>
-        <button class="opt-card" data-f="place" data-v="tjunction" onclick="selSingle(this,'place')"><span class="opt-card-icon">↗️</span>แยก T</button>
-        <button class="opt-card" data-f="place" data-v="roundabout" onclick="selSingle(this,'place')"><span class="opt-card-icon">🔄</span>วงเวียน</button>
-        <button class="opt-card" data-f="place" data-v="curve" onclick="selSingle(this,'place')"><span class="opt-card-icon">↩️</span>โค้งถนน</button>
-        <button class="opt-card" data-f="place" data-v="straight" onclick="selSingle(this,'place')"><span class="opt-card-icon">➡️</span>ทางตรง</button>
-        <button class="opt-card" data-f="place" data-v="slope" onclick="selSingle(this,'place')"><span class="opt-card-icon">⛰️</span>ทางลาดชัน</button>
-        <button class="opt-card" data-f="place" data-v="crosswalk" onclick="selSingle(this,'place')"><span class="opt-card-icon">🚶</span>ทางข้ามคนเดิน</button>
-        <button class="opt-card" data-f="place" data-v="school_zone" onclick="selSingle(this,'place')"><span class="opt-card-icon">🏫</span>หน้าโรงเรียน</button>
-        <button class="opt-card" data-f="place" data-v="bridge" onclick="selSingle(this,'place')"><span class="opt-card-icon">🌉</span>สะพาน</button>
-        <button class="opt-card" data-f="place" data-v="highway" onclick="selSingle(this,'place')"><span class="opt-card-icon">🛣️</span>ทางหลวง</button>
-        <button class="opt-card" data-f="place" data-v="alley" onclick="selSingle(this,'place')"><span class="opt-card-icon">🏘️</span>ซอย/ชุมชน</button>
-        <button class="opt-card" data-f="place" data-v="campus" onclick="selSingle(this,'place')"><span class="opt-card-icon">🎓</span>ภายในมหาวิทยาลัย</button>
+        <button class="opt-card" data-f="place" data-v="intersection" onclick="selSingle(this,'place')"><span class="opt-icon">🚦</span>สี่แยก</button>
+        <button class="opt-card" data-f="place" data-v="tjunction" onclick="selSingle(this,'place')"><span class="opt-icon">↗️</span>สามแยก</button>
+        <button class="opt-card" data-f="place" data-v="roundabout" onclick="selSingle(this,'place')"><span class="opt-icon">🔄</span>วงเวียน</button>
+        <button class="opt-card" data-f="place" data-v="curve" onclick="selSingle(this,'place')"><span class="opt-icon">↩️</span>ทางโค้ง</button>
+        <button class="opt-card" data-f="place" data-v="curve" onclick="selSingle(this,'place')"><span class="opt-icon">↩️</span>จุดกลับรถ</button>
+        <button class="opt-card" data-f="place" data-v="straight" onclick="selSingle(this,'place')"><span class="opt-icon">➡️</span>ทางตรง</button>
+        <button class="opt-card" data-f="place" data-v="slope" onclick="selSingle(this,'place')"><span class="opt-icon">⛰️</span>ทางลาดชัน</button>
+        <button class="opt-card" data-f="place" data-v="crosswalk" onclick="selSingle(this,'place')"><span class="opt-icon">🚶</span>ทางข้ามคนเดิน</button>
+        <button class="opt-card" data-f="place" data-v="school_zone" onclick="selSingle(this,'place')"><span class="opt-icon">🏫</span>หน้าโรงเรียน</button>
+        <button class="opt-card" data-f="place" data-v="bridge" onclick="selSingle(this,'place')"><span class="opt-icon">🌉</span>สะพาน</button>
+        <button class="opt-card" data-f="place" data-v="highway" onclick="selSingle(this,'place')"><span class="opt-icon">🛣️</span>ทางหลวง</button>
+        <button class="opt-card" data-f="place" data-v="alley" onclick="selSingle(this,'place')"><span class="opt-icon">🏘️</span>ซอย/ชุมชน</button>
+        <button class="opt-card" data-f="place" data-v="campus" onclick="selSingle(this,'place')"><span class="opt-icon">🎓</span>ในมหาวิทยาลัย</button>
       </div>
-
-      <div class="form-divider"></div>
-
-      <div class="field-section">
-        <label class="field-label">ยานพาหนะที่เกี่ยวข้อง <span style="font-weight:400;color:var(--text-4)">(เลือกได้หลายประเภท)</span></label>
-      </div>
-      <div class="opts-4" id="veh-grid">
-        <button class="opt-card" data-f="vehicles" data-v="motorcycle" onclick="selMulti(this,'vehicles')"><span class="opt-card-icon">🏍️</span>มอเตอร์ไซค์</button>
-        <button class="opt-card" data-f="vehicles" data-v="car" onclick="selMulti(this,'vehicles')"><span class="opt-card-icon">🚗</span>รถยนต์</button>
-        <button class="opt-card" data-f="vehicles" data-v="truck" onclick="selMulti(this,'vehicles')"><span class="opt-card-icon">🚛</span>รถบรรทุก</button>
-        <button class="opt-card" data-f="vehicles" data-v="bus" onclick="selMulti(this,'vehicles')"><span class="opt-card-icon">🚌</span>รถโดยสาร</button>
-        <button class="opt-card" data-f="vehicles" data-v="bicycle" onclick="selMulti(this,'vehicles')"><span class="opt-card-icon">🚲</span>จักรยาน</button>
-        <button class="opt-card" data-f="vehicles" data-v="tricycle" onclick="selMulti(this,'vehicles')"><span class="opt-card-icon">🛺</span>สามล้อ</button>
-        <button class="opt-card" data-f="vehicles" data-v="pedestrian" onclick="selMulti(this,'vehicles')"><span class="opt-card-icon">🚶</span>คนเดินเท้า</button>
-        <button class="opt-card" data-f="vehicles" data-v="unknown" onclick="selMulti(this,'vehicles')"><span class="opt-card-icon">❔</span>ไม่ทราบ</button>
-      </div>
-    </div>
-
-    <!-- ░░░░ STEP 3: ลักษณะเหตุ & สาเหตุ ░░░░ -->
-    <div class="step-page" id="sp-3">
-      <div class="field-section">
-        <label class="field-label">รูปแบบการเกิดเหตุ<span class="req">*</span></label>
-        <div class="field-desc">เลือกสิ่งที่เกิดขึ้น หรือใกล้เคียงที่สุด</div>
-      </div>
-      <div class="opts-2">
-        <button class="opt-card" data-f="incident" data-v="head_on" onclick="selSingle(this,'incident')"><span class="opt-card-icon">💥</span>รถชนประสานงา</button>
-        <button class="opt-card" data-f="incident" data-v="rear_end" onclick="selSingle(this,'incident')"><span class="opt-card-icon">🚗💨</span>รถชนท้าย</button>
-        <button class="opt-card" data-f="incident" data-v="side_swipe" onclick="selSingle(this,'incident')"><span class="opt-card-icon">↔️</span>รถชนด้านข้าง</button>
-        <button class="opt-card" data-f="incident" data-v="hit_ped" onclick="selSingle(this,'incident')"><span class="opt-card-icon">🚶‍♂️</span>รถชนคนเดินเท้า</button>
-        <button class="opt-card" data-f="incident" data-v="rollover" onclick="selSingle(this,'incident')"><span class="opt-card-icon">🌀</span>รถพลิกคว่ำ</button>
-        <button class="opt-card" data-f="incident" data-v="run_off" onclick="selSingle(this,'incident')"><span class="opt-card-icon">🛣️</span>รถตกถนน/ตกคลอง</button>
-        <button class="opt-card" data-f="incident" data-v="fall_slip" onclick="selSingle(this,'incident')"><span class="opt-card-icon">💧</span>ล้ม / ลื่นไถล</button>
-        <button class="opt-card" data-f="incident" data-v="hit_object" onclick="selSingle(this,'incident')"><span class="opt-card-icon">🪨</span>ชนสิ่งกีดขวาง</button>
-      </div>
-
-      <div class="form-divider"></div>
-
-      <div class="field-section">
-        <label class="field-label">สาเหตุที่คาดว่าเป็น <span style="font-weight:400;color:var(--text-4)">(เลือกได้หลายข้อ)</span></label>
-        <div class="field-desc">ระบุปัจจัยที่เชื่อว่ามีส่วนเกี่ยวข้อง</div>
-      </div>
-      <div class="opts-3" id="cause-grid">
-        <button class="opt-card" data-f="causes" data-v="speeding" onclick="selMulti(this,'causes')"><span class="opt-card-icon">🏎️</span>ขับเร็วเกินกำหนด</button>
-        <button class="opt-card" data-f="causes" data-v="drunk" onclick="selMulti(this,'causes')"><span class="opt-card-icon">🍺</span>สงสัยเมาสุรา</button>
-        <button class="opt-card" data-f="causes" data-v="sleepy" onclick="selMulti(this,'causes')"><span class="opt-card-icon">😴</span>ง่วง/เหม่อลอย</button>
-        <button class="opt-card" data-f="causes" data-v="distracted" onclick="selMulti(this,'causes')"><span class="opt-card-icon">📱</span>ใช้โทรศัพท์ขณะขับ</button>
-        <button class="opt-card" data-f="causes" data-v="red_light" onclick="selMulti(this,'causes')"><span class="opt-card-icon">🚦</span>ฝ่าสัญญาณไฟแดง</button>
-        <button class="opt-card" data-f="causes" data-v="no_yield" onclick="selMulti(this,'causes')"><span class="opt-card-icon">⛔</span>ไม่หยุดให้ทาง</button>
-        <button class="opt-card" data-f="causes" data-v="low_vis" onclick="selMulti(this,'causes')"><span class="opt-card-icon">🌫️</span>ทัศนวิสัยต่ำ</button>
-        <button class="opt-card" data-f="causes" data-v="slippery" onclick="selMulti(this,'causes')"><span class="opt-card-icon">🌧️</span>ถนนลื่น/น้ำท่วม</button>
-        <button class="opt-card" data-f="causes" data-v="no_light" onclick="selMulti(this,'causes')"><span class="opt-card-icon">🔦</span>ไฟส่องสว่างไม่เพียงพอ</button>
-        <button class="opt-card" data-f="causes" data-v="road_defect" onclick="selMulti(this,'causes')"><span class="opt-card-icon">🕳️</span>ถนนชำรุด/บ่อ</button>
-        <button class="opt-card" data-f="causes" data-v="no_sign" onclick="selMulti(this,'causes')"><span class="opt-card-icon">🪧</span>ป้ายเตือนไม่ชัดเจน</button>
-        <button class="opt-card" data-f="causes" data-v="unknown" onclick="selMulti(this,'causes')"><span class="opt-card-icon">❔</span>ไม่ทราบสาเหตุ</button>
-      </div>
-
-      <div class="form-divider"></div>
-
-      <div class="field-section">
-        <label class="field-label">กลุ่มผู้เกี่ยวข้อง <span style="font-weight:400;color:var(--text-4)">(เลือกได้หลายกลุ่ม)</span></label>
-        <div class="field-desc">ระบุกลุ่มผู้ใช้ถนนที่ได้รับผลกระทบ</div>
-      </div>
-      <div class="opts-4" id="group-grid">
-        <button class="opt-card" data-f="groups" data-v="child" onclick="selMulti(this,'groups')"><span class="opt-card-icon">👦</span>เด็ก<br><small style="font-size:9.5px;color:var(--text-4)">ต่ำกว่า 15 ปี</small></button>
-        <button class="opt-card" data-f="groups" data-v="elderly" onclick="selMulti(this,'groups')"><span class="opt-card-icon">👴</span>ผู้สูงอายุ<br><small style="font-size:9.5px;color:var(--text-4)">60 ปีขึ้นไป</small></button>
-        <button class="opt-card" data-f="groups" data-v="student" onclick="selMulti(this,'groups')"><span class="opt-card-icon">🎓</span>นักเรียน/<br>นักศึกษา</button>
-        <button class="opt-card" data-f="groups" data-v="disabled" onclick="selMulti(this,'groups')"><span class="opt-card-icon">♿</span>ผู้พิการ/<br>วีลแชร์</button>
-        <button class="opt-card" data-f="groups" data-v="worker" onclick="selMulti(this,'groups')"><span class="opt-card-icon">👷</span>คนงาน/<br>แรงงาน</button>
-        <button class="opt-card" data-f="groups" data-v="general" onclick="selMulti(this,'groups')"><span class="opt-card-icon">👥</span>ประชาชน<br>ทั่วไป</button>
-        <button class="opt-card" data-f="groups" data-v="tourist" onclick="selMulti(this,'groups')"><span class="opt-card-icon">🧳</span>นักท่องเที่ยว</button>
-        <button class="opt-card" data-f="groups" data-v="unknown" onclick="selMulti(this,'groups')"><span class="opt-card-icon">❔</span>ไม่ทราบ</button>
-      </div>
-    </div>
-
-    <!-- ░░░░ STEP 4: สภาพแวดล้อม ░░░░ -->
-    <div class="step-page" id="sp-4">
-      <div class="field-section">
-        <label class="field-label">ช่วงเวลาที่เกิดเหตุ<span class="req">*</span></label>
-      </div>
-      <div class="pill-row">
-        <button class="pill-opt" data-f="time_slot" data-v="dawn" onclick="selSingle(this,'time_slot')">🌅 รุ่งเช้า (05:00–09:00)</button>
-        <button class="pill-opt" data-f="time_slot" data-v="morning" onclick="selSingle(this,'time_slot')">☀️ สาย (09:00–12:00)</button>
-        <button class="pill-opt" data-f="time_slot" data-v="afternoon" onclick="selSingle(this,'time_slot')">🌤️ บ่าย (12:00–16:00)</button>
-        <button class="pill-opt" data-f="time_slot" data-v="evening" onclick="selSingle(this,'time_slot')">🌆 เย็น (16:00–20:00)</button>
-        <button class="pill-opt" data-f="time_slot" data-v="night" onclick="selSingle(this,'time_slot')">🌙 กลางคืน (20:00–01:00)</button>
-        <button class="pill-opt" data-f="time_slot" data-v="late_night" onclick="selSingle(this,'time_slot')">🌚 ดึก (01:00–05:00)</button>
-      </div>
-
-      <div class="form-divider"></div>
-
-      <div class="field-section">
-        <label class="field-label">สภาพอากาศและทัศนวิสัย<span class="req">*</span></label>
+      <div class="form-div"></div>
+      <div class="field-sect">
+        <label class="field-label">ยานพาหนะที่เกี่ยวข้อง <span style="font-weight:400;color:var(--text-4);text-transform:none">(เลือกได้หลายประเภท)</span></label>
       </div>
       <div class="opts-4">
-        <button class="opt-card" data-f="weather" data-v="clear" onclick="selSingle(this,'weather')"><span class="opt-card-icon">☀️</span>แดดจัด/ปกติ</button>
-        <button class="opt-card" data-f="weather" data-v="overcast" onclick="selSingle(this,'weather')"><span class="opt-card-icon">⛅</span>มีเมฆ/ครึ้ม</button>
-        <button class="opt-card" data-f="weather" data-v="rain" onclick="selSingle(this,'weather')"><span class="opt-card-icon">🌧️</span>ฝนตก</button>
-        <button class="opt-card" data-f="weather" data-v="fog" onclick="selSingle(this,'weather')"><span class="opt-card-icon">🌫️</span>หมอกหนา</button>
+        <button class="opt-card" data-f="vehicles" data-v="motorcycle" onclick="selMulti(this,'vehicles')"><span class="opt-icon">🏍️</span>มอเตอร์ไซค์</button>
+        <button class="opt-card" data-f="vehicles" data-v="car" onclick="selMulti(this,'vehicles')"><span class="opt-icon">🚗</span>รถยนต์</button>
+        <button class="opt-card" data-f="vehicles" data-v="truck" onclick="selMulti(this,'vehicles')"><span class="opt-icon">🚛</span>รถบรรทุก</button>
+        <button class="opt-card" data-f="vehicles" data-v="bus" onclick="selMulti(this,'vehicles')"><span class="opt-icon">🚌</span>รถโดยสาร</button>
+        <button class="opt-card" data-f="vehicles" data-v="bicycle" onclick="selMulti(this,'vehicles')"><span class="opt-icon">🚲</span>จักรยาน</button>
+        <button class="opt-card" data-f="vehicles" data-v="tricycle" onclick="selMulti(this,'vehicles')"><span class="opt-icon">🛺</span>สามล้อ</button>
+        <button class="opt-card" data-f="vehicles" data-v="pedestrian" onclick="selMulti(this,'vehicles')"><span class="opt-icon">🚶</span>คนเดินเท้า</button>
+        <button class="opt-card" data-f="vehicles" data-v="unknown" onclick="selMulti(this,'vehicles')"><span class="opt-icon">❔</span>ไม่ทราบ</button>
       </div>
+    </div>
 
-      <div class="form-divider"></div>
+    <!-- ░ STEP 3: รูปแบบ + สาเหตุ + กลุ่ม ░ -->
+    <div class="step-page" id="sp-3">
+      <div class="field-sect">
+        <label class="field-label">รูปแบบการเกิดเหตุ<span class="field-req">*</span></label>
+        <div class="field-desc">อิง: WHO 5 Pillars — Post-accident Response</div>
+      </div>
+      <div class="opts-2">
+        <button class="opt-card" data-f="incident" data-v="head_on" onclick="selSingle(this,'incident')"><span class="opt-icon">💥</span>รถชนประสานงา</button>
+        <button class="opt-card" data-f="incident" data-v="rear_end" onclick="selSingle(this,'incident')"><span class="opt-icon">↩️</span>รถชนท้าย</button>
+        <button class="opt-card" data-f="incident" data-v="side_swipe" onclick="selSingle(this,'incident')"><span class="opt-icon">↔️</span>รถชนด้านข้าง</button>
+        <button class="opt-card" data-f="incident" data-v="hit_ped" onclick="selSingle(this,'incident')"><span class="opt-icon">🚶</span>รถชนคนเดินเท้า</button>
+        <button class="opt-card" data-f="incident" data-v="rollover" onclick="selSingle(this,'incident')"><span class="opt-icon">🌀</span>รถพลิกคว่ำ</button>
+        <button class="opt-card" data-f="incident" data-v="run_off" onclick="selSingle(this,'incident')"><span class="opt-icon">🛣️</span>รถตกถนน/คลอง</button>
+        <button class="opt-card" data-f="incident" data-v="fall_slip" onclick="selSingle(this,'incident')"><span class="opt-icon">💧</span>ล้ม / ลื่นไถล</button>
+        <button class="opt-card" data-f="incident" data-v="hit_object" onclick="selSingle(this,'incident')"><span class="opt-icon">🪨</span>ชนสิ่งกีดขวาง</button>
+      </div>
+      <div class="form-div"></div>
+      <div class="field-sect">
+        <label class="field-label">สาเหตุที่คาดว่าเป็น <span style="font-weight:400;color:var(--text-4);text-transform:none">(เลือกได้หลายข้อ)</span></label>
+        <div class="field-desc">อิง: WHO 5 Pillars — Safe Road Users + Safe Infrastructure</div>
+      </div>
+      <div class="opts-3">
+        <button class="opt-card" data-f="causes" data-v="speeding" onclick="selMulti(this,'causes')"><span class="opt-icon">🏎️</span>ขับเร็วเกิน</button>
+        <button class="opt-card" data-f="causes" data-v="drunk" onclick="selMulti(this,'causes')"><span class="opt-icon">🍺</span>สงสัยเมาสุรา</button>
+        <button class="opt-card" data-f="causes" data-v="sleepy" onclick="selMulti(this,'causes')"><span class="opt-icon">😴</span>ง่วง/เหม่อลอย</button>
+        <button class="opt-card" data-f="causes" data-v="distracted" onclick="selMulti(this,'causes')"><span class="opt-icon">📱</span>ใช้โทรศัพท์ขณะขับ</button>
+        <button class="opt-card" data-f="causes" data-v="red_light" onclick="selMulti(this,'causes')"><span class="opt-icon">🚦</span>ฝ่าสัญญาณไฟแดง</button>
+        <button class="opt-card" data-f="causes" data-v="no_yield" onclick="selMulti(this,'causes')"><span class="opt-icon">⛔</span>ไม่หยุดให้ทาง</button>
+        <button class="opt-card" data-f="causes" data-v="low_vis" onclick="selMulti(this,'causes')"><span class="opt-icon">🌫️</span>ทัศนวิสัยต่ำ</button>
+        <button class="opt-card" data-f="causes" data-v="slippery" onclick="selMulti(this,'causes')"><span class="opt-icon">🌧️</span>ถนนลื่น/น้ำท่วม</button>
+        <button class="opt-card" data-f="causes" data-v="no_light" onclick="selMulti(this,'causes')"><span class="opt-icon">🔦</span>ไฟส่องสว่างน้อย</button>
+        <button class="opt-card" data-f="causes" data-v="road_defect" onclick="selMulti(this,'causes')"><span class="opt-icon">🕳️</span>ถนนชำรุด/บ่อ</button>
+        <button class="opt-card" data-f="causes" data-v="no_sign" onclick="selMulti(this,'causes')"><span class="opt-icon">🪧</span>ป้ายเตือนไม่ชัด</button>
+        <button class="opt-card" data-f="causes" data-v="unknown" onclick="selMulti(this,'causes')"><span class="opt-icon">❔</span>ไม่ทราบสาเหตุ</button>
+      </div>
+      <div class="form-div"></div>
+      <div class="field-sect">
+        <label class="field-label">กลุ่มผู้เกี่ยวข้อง <span style="font-weight:400;color:var(--text-4);text-transform:none">(เลือกได้หลายกลุ่ม)</span></label>
+        <div class="field-desc">อิง: Safe System — Equity Framework (Johns Hopkins, 2023)</div>
+      </div>
+      <div class="opts-4">
+        <button class="opt-card" data-f="groups" data-v="child" onclick="selMulti(this,'groups')"><span class="opt-icon">👦</span>เด็ก<br><small style="font-size:9.5px;color:var(--text-4)">&lt;15 ปี</small></button>
+        <button class="opt-card" data-f="groups" data-v="elderly" onclick="selMulti(this,'groups')"><span class="opt-icon">👴</span>ผู้สูงอายุ<br><small style="font-size:9.5px;color:var(--text-4)">60+</small></button>
+        <button class="opt-card" data-f="groups" data-v="student" onclick="selMulti(this,'groups')"><span class="opt-icon">🎓</span>นักเรียน/<br>นักศึกษา</button>
+        <button class="opt-card" data-f="groups" data-v="disabled" onclick="selMulti(this,'groups')"><span class="opt-icon">♿</span>ผู้พิการ/<br>วีลแชร์</button>
+        <button class="opt-card" data-f="groups" data-v="worker" onclick="selMulti(this,'groups')"><span class="opt-icon">👷</span>คนงาน</button>
+        <button class="opt-card" data-f="groups" data-v="general" onclick="selMulti(this,'groups')"><span class="opt-icon">👥</span>ประชาชน<br>ทั่วไป</button>
+        <button class="opt-card" data-f="groups" data-v="tourist" onclick="selMulti(this,'groups')"><span class="opt-icon">🧳</span>นักท่องเที่ยว</button>
+        <button class="opt-card" data-f="groups" data-v="unknown" onclick="selMulti(this,'groups')"><span class="opt-icon">❔</span>ไม่ทราบ</button>
+      </div>
+    </div>
 
-      <div class="field-section">
+    <!-- ░ STEP 4: สภาพแวดล้อม ░ -->
+    <div class="step-page" id="sp-4">
+      <div class="field-sect">
+        <label class="field-label">ช่วงเวลาที่เกิดเหตุ<span class="field-req">*</span></label>
+      </div>
+      <div class="pill-row">
+        <button class="pill-opt" data-f="time_slot" data-v="dawn" onclick="selSingle(this,'time_slot')">🌅 รุ่งเช้า (05–09น.)</button>
+        <button class="pill-opt" data-f="time_slot" data-v="morning" onclick="selSingle(this,'time_slot')">☀️ สาย (09–12น.)</button>
+        <button class="pill-opt" data-f="time_slot" data-v="afternoon" onclick="selSingle(this,'time_slot')">🌤️ บ่าย (12–16น.)</button>
+        <button class="pill-opt" data-f="time_slot" data-v="evening" onclick="selSingle(this,'time_slot')">🌆 เย็น (16–20น.)</button>
+        <button class="pill-opt" data-f="time_slot" data-v="night" onclick="selSingle(this,'time_slot')">🌙 กลางคืน (20–01น.)</button>
+        <button class="pill-opt" data-f="time_slot" data-v="late_night" onclick="selSingle(this,'time_slot')">🌚 ดึก (01–05น.)</button>
+      </div>
+      <div class="form-div"></div>
+      <div class="field-sect">
+        <label class="field-label">สภาพอากาศ<span class="field-req">*</span></label>
+      </div>
+      <div class="opts-4">
+        <button class="opt-card" data-f="weather" data-v="clear" onclick="selSingle(this,'weather')"><span class="opt-icon">☀️</span>แดดจัด/ปกติ</button>
+        <button class="opt-card" data-f="weather" data-v="overcast" onclick="selSingle(this,'weather')"><span class="opt-icon">⛅</span>มีเมฆ/ครึ้ม</button>
+        <button class="opt-card" data-f="weather" data-v="rain" onclick="selSingle(this,'weather')"><span class="opt-icon">🌧️</span>ฝนตก</button>
+        <button class="opt-card" data-f="weather" data-v="fog" onclick="selSingle(this,'weather')"><span class="opt-icon">🌫️</span>หมอกหนา</button>
+      </div>
+      <div class="form-div"></div>
+      <div class="field-sect">
         <label class="field-label">วันที่เกิดเหตุ</label>
       </div>
       <div class="pill-row">
-        <button class="pill-opt" data-f="day_type" data-v="weekday" onclick="selSingle(this,'day_type')">📅 วันธรรมดา (จันทร์–ศุกร์)</button>
-        <button class="pill-opt" data-f="day_type" data-v="weekend" onclick="selSingle(this,'day_type')">🗓️ วันหยุด (เสาร์–อาทิตย์)</button>
+        <button class="pill-opt" data-f="day_type" data-v="weekday" onclick="selSingle(this,'day_type')">📅 วันธรรมดา (จ–ศ)</button>
+        <button class="pill-opt" data-f="day_type" data-v="weekend" onclick="selSingle(this,'day_type')">🗓️ วันหยุด (ส–อา)</button>
         <button class="pill-opt" data-f="day_type" data-v="holiday" onclick="selSingle(this,'day_type')">🎉 วันหยุดนักขัตฤกษ์</button>
       </div>
-
-      <div class="form-divider"></div>
-
-      <div class="field-section">
-        <label class="field-label">ข้อบกพร่องของโครงสร้างพื้นฐาน <span style="font-weight:400;color:var(--text-4)">(เลือกได้หลายข้อ)</span></label>
-        <div class="field-desc">ระบุปัญหาทางกายภาพที่พบในพื้นที่</div>
+      <div class="form-div"></div>
+      <div class="field-sect">
+        <label class="field-label">ข้อบกพร่องโครงสร้างพื้นฐาน <span style="font-weight:400;color:var(--text-4);text-transform:none">(เลือกได้หลายข้อ)</span></label>
+        <div class="field-desc">อิง: WHO 5 Pillars — Safe Roads + Safe Infrastructure</div>
       </div>
-      <div class="opts-3" id="infra-grid">
-        <button class="opt-card" data-f="infra" data-v="no_signal" onclick="selMulti(this,'infra')"><span class="opt-card-icon">🚦</span>ไม่มีสัญญาณไฟจราจร</button>
-        <button class="opt-card" data-f="infra" data-v="no_sign" onclick="selMulti(this,'infra')"><span class="opt-card-icon">🪧</span>ขาดป้ายเตือน/ป้ายบอกทาง</button>
-        <button class="opt-card" data-f="infra" data-v="no_barrier" onclick="selMulti(this,'infra')"><span class="opt-card-icon">🚧</span>ไม่มีแผงกั้นหรือราวกันตก</button>
-        <button class="opt-card" data-f="infra" data-v="no_sidewalk" onclick="selMulti(this,'infra')"><span class="opt-card-icon">🚶</span>ขาดทางเท้า/ทางจักรยาน</button>
-        <button class="opt-card" data-f="infra" data-v="narrow_road" onclick="selMulti(this,'infra')"><span class="opt-card-icon">↔️</span>ถนนแคบเกินไป</button>
-        <button class="opt-card" data-f="infra" data-v="pothole" onclick="selMulti(this,'infra')"><span class="opt-card-icon">🕳️</span>บ่อ/ผิวถนนชำรุด</button>
-        <button class="opt-card" data-f="infra" data-v="faded_marking" onclick="selMulti(this,'infra')"><span class="opt-card-icon">📏</span>เส้นจราจรลบ/ชำรุด</button>
-        <button class="opt-card" data-f="infra" data-v="obstruction" onclick="selMulti(this,'infra')"><span class="opt-card-icon">🪨</span>มีสิ่งกีดขวาง</button>
-        <button class="opt-card" data-f="infra" data-v="no_ramp" onclick="selMulti(this,'infra')"><span class="opt-card-icon">♿</span>ไม่มีทางลาดสำหรับผู้พิการ</button>
+      <div class="opts-3">
+        <button class="opt-card" data-f="infra" data-v="no_signal" onclick="selMulti(this,'infra')"><span class="opt-icon">🚦</span>ไม่มีสัญญาณไฟ</button>
+        <button class="opt-card" data-f="infra" data-v="no_sign" onclick="selMulti(this,'infra')"><span class="opt-icon">🪧</span>ขาดป้ายเตือน</button>
+        <button class="opt-card" data-f="infra" data-v="no_barrier" onclick="selMulti(this,'infra')"><span class="opt-icon">🚧</span>ไม่มีแผงกั้น</button>
+        <button class="opt-card" data-f="infra" data-v="no_sidewalk" onclick="selMulti(this,'infra')"><span class="opt-icon">🚶</span>ขาดทางเท้า</button>
+        <button class="opt-card" data-f="infra" data-v="narrow" onclick="selMulti(this,'infra')"><span class="opt-icon">↔️</span>ถนนแคบเกิน</button>
+        <button class="opt-card" data-f="infra" data-v="pothole" onclick="selMulti(this,'infra')"><span class="opt-icon">🕳️</span>บ่อ/ถนนพัง</button>
+        <button class="opt-card" data-f="infra" data-v="faded_mark" onclick="selMulti(this,'infra')"><span class="opt-icon">📏</span>เส้นจราจรลบ</button>
+        <button class="opt-card" data-f="infra" data-v="obstruction" onclick="selMulti(this,'infra')"><span class="opt-icon">🪨</span>สิ่งกีดขวาง</button>
+        <button class="opt-card" data-f="infra" data-v="no_ramp" onclick="selMulti(this,'infra')"><span class="opt-icon">♿</span>ไม่มีทางลาด</button>
       </div>
     </div>
 
-    <!-- ░░░░ STEP 5: คำอธิบายและผู้รายงาน ░░░░ -->
+    <!-- ░ STEP 5: รายละเอียด + ผู้รายงาน ░ -->
     <div class="step-page" id="sp-5">
-      <div class="field-section">
-        <label class="field-label">คำอธิบายเพิ่มเติม <span style="font-weight:400;color:var(--text-4)">(ไม่บังคับ)</span></label>
-        <div class="field-desc">อธิบายรายละเอียดเพิ่มเติม เช่น ตำแหน่งที่แม่นยำ สิ่งที่เห็น หรือข้อเสนอแนะ</div>
+      <div class="field-sect">
+        <label class="field-label">คำอธิบายเพิ่มเติม <span style="font-weight:400;color:var(--text-4);text-transform:none">(ไม่บังคับ)</span></label>
+        <div class="field-desc">ตำแหน่งที่แม่นยำ สิ่งที่เห็น หรือข้อเสนอแนะเพิ่มเติม</div>
       </div>
-      <textarea class="form-textarea" id="inp-desc" placeholder="เช่น: บ่อขนาดใหญ่อยู่กลางเลนซ้าย ห่างจากป้ายรถเมล์ประมาณ 50 เมตร ไม่มีกรวยกั้น..."></textarea>
-
-      <div class="form-divider"></div>
-
-      <div class="field-section">
-        <label class="field-label">ภาพหลักฐานประกอบ <span style="font-weight:400;color:var(--text-4)">(ไม่บังคับ)</span></label>
-        <div class="field-desc">ภาพสถานที่หรือความเสียหายจะช่วยให้หน่วยงานดำเนินการได้รวดเร็วขึ้น</div>
+      <textarea class="form-ta" id="inp-desc" placeholder="เช่น: บ่อขนาดใหญ่อยู่กลางเลนซ้าย ห่างจากป้ายรถเมล์ประมาณ 50 เมตร ไม่มีกรวยกั้น..."></textarea>
+      <div class="form-div"></div>
+      <div class="field-sect">
+        <label class="field-label">ภาพหลักฐาน <span style="font-weight:400;color:var(--text-4);text-transform:none">(ไม่บังคับ)</span></label>
+        <div class="field-desc">ภาพสถานที่หรือความเสียหายช่วยให้หน่วยงานดำเนินการได้รวดเร็วขึ้น</div>
       </div>
-      <label class="photo-upload-zone" id="photo-zone">
-        <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotoUpload(event)">
-        <div class="photo-upload-icon">📷</div>
-        <div class="photo-upload-title">แตะเพื่อเลือกหรือถ่ายภาพ</div>
-        <div class="photo-upload-sub">ไฟล์ JPG, PNG — สูงสุด 3 รูป</div>
-        <div class="photo-previews" id="photo-previews"></div>
+      <label class="photo-zone">
+        <input type="file" id="photo-inp" accept="image/*" multiple onchange="handlePhoto(event)">
+        <div class="pz-icon">📷</div>
+        <div class="pz-title">แตะเพื่อเลือกหรือถ่ายภาพ</div>
+        <div class="pz-sub">JPG, PNG — สูงสุด 3 รูป</div>
+        <div class="photo-previews" id="photo-prev"></div>
       </label>
-
-      <div class="form-divider"></div>
-
-      <div class="field-section">
-        <label class="field-label">ข้อมูลผู้รายงาน <span style="font-weight:400;color:var(--text-4)">(ไม่บังคับ)</span></label>
+      <div class="form-div"></div>
+      <!-- Reporter info from login (auto-filled, read-only) -->
+      <div style="background:var(--navy-xl);border:1px solid var(--navy-l);border-radius:var(--r-sm);padding:12px 14px;font-size:12px;color:var(--text-2);margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">ข้อมูลผู้รายงาน (จาก Login)</div>
+        <div id="rpt-user-info">—</div>
       </div>
-      <input class="form-input" id="inp-name" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น" style="margin-bottom:8px">
-
-      <div class="field-section" style="margin-top:10px">
-        <label class="field-label">สถานะผู้รายงาน</label>
+      <div style="padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;color:var(--text-3);line-height:1.6">
+        ข้อมูลที่รายงานจะถูกส่งให้หน่วยงานที่เกี่ยวข้องเพื่อปรับปรุงความปลอดภัยทางถนน ข้อมูลส่วนตัวจะถูกเก็บรักษาเป็นความลับตามนโยบายมหาวิทยาลัย
       </div>
-      <div class="opts-3">
-        <button class="opt-card" data-f="reporter_role" data-v="student" onclick="selSingle(this,'reporter_role')"><span class="opt-card-icon">🎓</span>นักเรียน/<br>นักศึกษา</button>
-        <button class="opt-card" data-f="reporter_role" data-v="staff" onclick="selSingle(this,'reporter_role')"><span class="opt-card-icon">🏫</span>อาจารย์/<br>บุคลากร</button>
-        <button class="opt-card" data-f="reporter_role" data-v="public" onclick="selSingle(this,'reporter_role')"><span class="opt-card-icon">👤</span>ประชาชน<br>ทั่วไป</button>
-        <button class="opt-card" data-f="reporter_role" data-v="victim" onclick="selSingle(this,'reporter_role')"><span class="opt-card-icon">🩹</span>ผู้ประสบเหตุ<br>โดยตรง</button>
-        <button class="opt-card" data-f="reporter_role" data-v="witness" onclick="selSingle(this,'reporter_role')"><span class="opt-card-icon">👁️</span>พยาน<br>เหตุการณ์</button>
-        <button class="opt-card" data-f="reporter_role" data-v="officer" onclick="selSingle(this,'reporter_role')"><span class="opt-card-icon">👮</span>เจ้าหน้าที่</button>
-      </div>
-
-      <div style="margin-top:12px;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;color:var(--text-3);line-height:1.6;">
-        ข้อมูลที่รายงานจะถูกส่งให้หน่วยงานที่เกี่ยวข้องเพื่อปรับปรุงความปลอดภัยทางถนน ข้อมูลส่วนตัวจะถูกเก็บรักษาเป็นความลับ
-      </div>
-
-      <div id="submit-status" style="display:none;margin-top:10px;padding:11px 13px;border-radius:var(--r-sm);font-size:13px;font-weight:500;"></div>
     </div>
 
   </div><!-- /panel-body -->
 
-  <!-- WIZARD FOOTER BUTTONS -->
-  <div class="wizard-footer active" id="wizard-footer">
-    <button class="wf-back" id="wf-back" style="display:none" onclick="wizardBack()">← ย้อนกลับ</button>
-    <button class="wf-next" id="wf-next" onclick="wizardNext()">ถัดไป →</button>
+  <!-- WIZARD FOOTER -->
+  <div class="wiz-footer active" id="wiz-footer">
+    <button class="wf-back" id="wf-back" style="display:none" onclick="wizBack()">← ย้อนกลับ</button>
+    <button class="wf-next" id="wf-next" onclick="wizNext()">ถัดไป →</button>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     PANEL: PROFILE & GAMIFICATION
-════════════════════════════════════════ -->
+<!-- ════ PANEL: PROFILE ════ -->
 <div class="panel" id="panel-profile">
   <div class="panel-handle-wrap"><div class="panel-handle"></div></div>
   <div class="panel-header">
-    <div class="panel-header-left">
-      <div class="panel-header-icon">👤</div>
+    <div class="ph-left">
+      <div class="ph-icon">👤</div>
       <div>
         <div class="panel-title">โปรไฟล์และความสำเร็จ</div>
         <div class="panel-subtitle">ติดตามคะแนนและเหรียญรางวัล</div>
@@ -2158,123 +1099,83 @@ body {
     <button class="panel-close" onclick="closeAllPanels()">✕</button>
   </div>
   <div class="panel-body">
-    <!-- Profile Card -->
-    <div class="profile-card">
-      <div class="pc-name" id="prof-name">ผู้ใช้งาน</div>
-      <div class="pc-level" id="prof-level">ระดับ: ผู้เริ่มต้น</div>
+    <div class="prof-card">
+      <div class="pc-name" id="prof-name">—</div>
+      <div class="pc-code" id="prof-code">—</div>
+      <div class="pc-faculty" id="prof-faculty">—</div>
+      <div class="pc-level" id="prof-level">ระดับ: ผู้เริ่มต้น 🌱</div>
       <div class="pc-stats">
-        <div><div class="pcs-num" id="prof-pts">0</div><div class="pcs-label">คะแนนสะสม</div></div>
-        <div><div class="pcs-num" id="prof-reps">0</div><div class="pcs-label">รายงาน</div></div>
-        <div><div class="pcs-num" id="prof-votes-recv">0</div><div class="pcs-label">โหวตที่ได้รับ</div></div>
+        <div><div class="pcs-n" id="prof-pts">0</div><div class="pcs-l">คะแนน</div></div>
+        <div><div class="pcs-n" id="prof-reps">0</div><div class="pcs-l">รายงาน</div></div>
+        <div><div class="pcs-n" id="prof-votes">0</div><div class="pcs-l">ยืนยันรับ</div></div>
       </div>
       <div class="pc-xp-bar"><div class="pc-xp-fill" id="xp-fill" style="width:0%"></div></div>
-      <div class="pc-xp-label" id="xp-label">0 / 100 XP สู่ระดับถัดไป</div>
+      <div class="pc-xp-lbl" id="xp-lbl">0 / 100 XP สู่ระดับถัดไป</div>
     </div>
-
-    <!-- Edit name -->
-    <div style="margin-bottom:16px">
-      <div class="field-section"><label class="field-label">ชื่อผู้ใช้งาน</label></div>
-      <div style="display:flex;gap:8px">
-        <input class="form-input" id="edit-name" placeholder="ชื่อ-นามสกุล หรือชื่อเล่น">
-        <button onclick="saveName()" style="padding:0 16px;background:var(--navy);color:var(--white);border:none;border-radius:var(--r-sm);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;letter-spacing:0.1px">บันทึก</button>
-      </div>
-    </div>
-
-    <div class="form-divider"></div>
-
-    <div class="section-heading">เหรียญรางวัล</div>
+    <div class="sec-head">เหรียญรางวัล</div>
     <div class="badge-grid" id="badge-grid"></div>
-
-    <div class="form-divider"></div>
-
-    <div class="section-heading">เกณฑ์การได้รับคะแนน</div>
-    <div class="pts-guide">
-      <div class="pts-row"><span>รายงานจุดเสี่ยงใหม่</span><span class="pts-val">+10 คะแนน</span></div>
-      <div class="pts-row"><span>รายงาน "เกือบเกิดอุบัติเหตุ" (Near-Miss)</span><span class="pts-val">+10 คะแนนเพิ่ม</span></div>
-      <div class="pts-row"><span>แนบภาพหลักฐาน</span><span class="pts-val">+5 คะแนน</span></div>
-      <div class="pts-row"><span>ผู้ใช้อื่นยืนยันรายงาน</span><span class="pts-val">+5 คะแนน</span></div>
-      <div class="pts-row"><span>จุดเสี่ยงได้รับการแก้ไขแล้ว</span><span class="pts-val">+20 คะแนน</span></div>
+    <div class="form-div"></div>
+    <div class="sec-head">เกณฑ์การได้รับคะแนน</div>
+    <div class="pts-table">
+      <div class="pts-row"><span>รายงานจุดเสี่ยงใหม่</span><span class="pts-val">+10</span></div>
+      <div class="pts-row"><span>รายงาน "เกือบเกิดอุบัติเหตุ"</span><span class="pts-val">+10 เพิ่ม</span></div>
+      <div class="pts-row"><span>แนบภาพหลักฐาน</span><span class="pts-val">+5</span></div>
+      <div class="pts-row"><span>ผู้ใช้อื่นยืนยันรายงาน</span><span class="pts-val">+5</span></div>
+      <div class="pts-row"><span>จุดเสี่ยงได้รับการแก้ไขแล้ว</span><span class="pts-val">+20</span></div>
     </div>
-
     <div style="height:16px"></div>
+    <button onclick="doLogout()" style="width:100%;padding:12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:var(--font);font-size:13px;font-weight:600;color:var(--text-3);cursor:pointer;margin-bottom:8px">ออกจากระบบ</button>
   </div>
 </div>
+
+</div><!-- /app -->
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════════════════════════════
-//  CONFIG
-// ════════════════════════════════════════════════════════
-const GAS_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+// ════════════════════════════════════════════════
+// CONFIG — แก้ URL หลัง deploy Google Apps Script
+// ════════════════════════════════════════════════
+const GAS_URL = localStorage.getItem('sr_gas_url') || 'YOUR_GAS_URL_HERE';
 
-// ════════════════════════════════════════════════════════
-//  GLOBAL STATE
-// ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// FACULTY MAP (รหัส 2 ตัว → คณะ)
+// ════════════════════════════════════════════════
+const FACULTY_MAP = {
+  '01':'คณะครุศาสตร์',
+  '02':'คณะมนุษยศาสตร์และสังคมศาสตร์',
+  '03':'คณะวิทยาการจัดการ',
+  '04':'คณะวิทยาศาสตร์และเทคโนโลยี',
+  '05':'คณะเทคโนโลยีการเกษตรและอาหาร',
+  '06':'คณะเทคโนโลยีอุตสาหกรรม',
+  '07':'คณะสังคมศาสตร์และการพัฒนาท้องถิ่น',
+  '08':'คณะพยาบาลศาสตร์',
+  '09':'บุคลากร / อาจารย์',
+  '10':'สำนักส่งเสริมวิชาการ',
+  '11':'สำนักวิทยบริการ',
+  '12':'กองพัฒนานักศึกษา',
+};
+
+// ════════════════════════════════════════════════
+// APP STATE
+// ════════════════════════════════════════════════
 const APP = {
+  user:    null, // { studentId, faculty, facultyCode, name, pts }
   reports: [],
-  user:    { name:'', pts:0 },
   form:    {},
   step:    1,
-  lat:     null,
-  lng:     null,
+  lat:     null, lng: null,
   photos:  [],
   filter:  'all',
   mapMode: 'pin',
-  pinLayers:     [],
-  heatLayer:     null,
-  clusterGroup:  null,
-  tempMarker:    null,
+  pinLayers:    [],
+  heatLayer:    null,
+  clusterGroup: null,
+  tempMarker:   null,
 };
 
 const TOTAL_STEPS = 5;
-
-// ── Lookup tables ──
-const SEV_COLOR = {
-  accident: '#c0392b',
-  frequent: '#e67e22',
-  near:     '#27ae60',
-  observe:  '#2563eb',
-};
-const SEV_LABEL = {
-  accident: 'เกิดอุบัติเหตุแล้ว',
-  frequent: 'เกิดบ่อย/เสี่ยงสูง',
-  near:     'เกือบเกิดอุบัติเหตุ',
-  observe:  'สังเกตเห็นจุดเสี่ยง',
-};
-const SEV_ICON = {
-  accident: '🚨', frequent: '⚠️', near: '⚡', observe: '👁️'
-};
-
-const PLACE_LABEL = {
-  intersection:'สี่แยก', tjunction:'แยก T', roundabout:'วงเวียน',
-  curve:'โค้งถนน', straight:'ทางตรง', slope:'ทางลาด',
-  crosswalk:'ทางข้ามคนเดิน', school_zone:'หน้าโรงเรียน',
-  bridge:'สะพาน', highway:'ทางหลวง', alley:'ซอย/ชุมชน',
-  campus:'ภายในมหาวิทยาลัย',
-};
-const INCIDENT_LABEL = {
-  head_on:'รถชนประสานงา', rear_end:'รถชนท้าย', side_swipe:'รถชนด้านข้าง',
-  hit_ped:'รถชนคนเดิน', rollover:'รถพลิกคว่ำ', run_off:'รถตกถนน',
-  fall_slip:'ล้ม/ลื่น', hit_object:'ชนสิ่งกีดขวาง',
-};
-const CAUSE_LABEL = {
-  speeding:'ขับเร็วเกิน', drunk:'สงสัยเมาสุรา', sleepy:'ง่วง/เหม่อลอย',
-  distracted:'ใช้โทรศัพท์', red_light:'ฝ่าไฟแดง', no_yield:'ไม่หยุดให้ทาง',
-  low_vis:'ทัศนวิสัยต่ำ', slippery:'ถนนลื่น', no_light:'ไฟส่องสว่างน้อย',
-  road_defect:'ถนนชำรุด', no_sign:'ป้ายไม่ชัด', unknown:'ไม่ทราบสาเหตุ',
-};
-const VEH_LABEL = {
-  motorcycle:'มอเตอร์ไซค์', car:'รถยนต์', truck:'รถบรรทุก',
-  bus:'รถโดยสาร', bicycle:'จักรยาน', tricycle:'สามล้อ',
-  pedestrian:'คนเดินเท้า', unknown:'ไม่ทราบ',
-};
-const TIME_LABEL = {
-  dawn:'รุ่งเช้า', morning:'สาย', afternoon:'บ่าย',
-  evening:'เย็น', night:'กลางคืน', late_night:'ดึก',
-};
-
 const STEP_LABELS = [
   '',
   'ประเภทและความรุนแรงของเหตุการณ์',
@@ -2284,821 +1185,591 @@ const STEP_LABELS = [
   'คำอธิบายเพิ่มเติมและข้อมูลผู้รายงาน',
 ];
 
+const SEV_COLOR = { accident:'#c0392b', frequent:'#e67e22', near:'#27ae60', observe:'#2563eb' };
+const SEV_LABEL = { accident:'เกิดอุบัติเหตุแล้ว', frequent:'เกิดบ่อย/เสี่ยงสูง', near:'เกือบเกิดอุบัติเหตุ', observe:'สังเกตเห็นจุดเสี่ยง' };
+const SEV_ICON  = { accident:'🚨', frequent:'⚠️', near:'⚡', observe:'👁️' };
+
+const PLACE_LABEL = { intersection:'สี่แยก', tjunction:'แยก T', roundabout:'วงเวียน', curve:'โค้งถนน', straight:'ทางตรง', slope:'ทางลาด', crosswalk:'ทางข้ามคนเดิน', school_zone:'หน้าโรงเรียน', bridge:'สะพาน', highway:'ทางหลวง', alley:'ซอย/ชุมชน', campus:'ในมหาวิทยาลัย' };
+const INCIDENT_LABEL = { head_on:'รถชนประสานงา', rear_end:'รถชนท้าย', side_swipe:'รถชนด้านข้าง', hit_ped:'รถชนคนเดิน', rollover:'รถพลิกคว่ำ', run_off:'รถตกถนน', fall_slip:'ล้ม/ลื่น', hit_object:'ชนสิ่งกีดขวาง' };
+const CAUSE_LABEL = { speeding:'ขับเร็วเกิน', drunk:'สงสัยเมาสุรา', sleepy:'ง่วง/เหม่อลอย', distracted:'ใช้โทรศัพท์', red_light:'ฝ่าไฟแดง', no_yield:'ไม่หยุดให้ทาง', low_vis:'ทัศนวิสัยต่ำ', slippery:'ถนนลื่น', no_light:'ไฟส่องสว่างน้อย', road_defect:'ถนนชำรุด', no_sign:'ป้ายไม่ชัด', unknown:'ไม่ทราบ' };
+const VEH_LABEL = { motorcycle:'มอเตอร์ไซค์', car:'รถยนต์', truck:'รถบรรทุก', bus:'รถโดยสาร', bicycle:'จักรยาน', tricycle:'สามล้อ', pedestrian:'คนเดินเท้า', unknown:'ไม่ทราบ' };
+const TIME_LABEL = { dawn:'รุ่งเช้า', morning:'สาย', afternoon:'บ่าย', evening:'เย็น', night:'กลางคืน', late_night:'ดึก' };
+
 const BADGE_DEFS = [
-  { id:'first',    icon:'🌱', name:'ก้าวแรก',        req: n => n >= 1 },
-  { id:'explorer', icon:'🔍', name:'นักสำรวจ',       req: n => n >= 5 },
-  { id:'guardian', icon:'🛡️', name:'ผู้พิทักษ์',     req: n => n >= 20 },
-  { id:'hero',     icon:'⭐', name:'วีรบุรุษ',       req: n => n >= 50 },
-  { id:'nearmiss', icon:'⚡', name:'Near-Miss Pro',   req: _ => APP.reports.filter(r => r.sev==='near').length >= 3 },
-  { id:'photo',    icon:'📷', name:'นักถ่ายภาพ',     req: _ => APP.reports.some(r => r.hasPhoto) },
-  { id:'equity',   icon:'♿', name:'Equity Guard',    req: _ => APP.reports.some(r => (r.groups||[]).includes('disabled')) },
-  { id:'campus',   icon:'🎓', name:'Campus Safety',   req: _ => APP.reports.some(r => r.reporter_role === 'student') },
+  { id:'first',    icon:'🌱', name:'ก้าวแรก',      req: n=>n>=1 },
+  { id:'explorer', icon:'🔍', name:'นักสำรวจ',     req: n=>n>=5 },
+  { id:'guardian', icon:'🛡️', name:'ผู้พิทักษ์',   req: n=>n>=20 },
+  { id:'hero',     icon:'⭐', name:'วีรบุรุษ',     req: n=>n>=50 },
+  { id:'nearmiss', icon:'⚡', name:'Near-Miss Pro',  req: _=>APP.reports.filter(r=>r.sev==='near').length>=3 },
+  { id:'photo',    icon:'📷', name:'นักถ่ายภาพ',   req: _=>APP.reports.some(r=>r.hasPhoto) },
+  { id:'equity',   icon:'♿', name:'Equity Guard',  req: _=>APP.reports.some(r=>(r.groups||[]).includes('disabled')) },
+  { id:'campus',   icon:'🎓', name:'Campus Safety', req: _=>APP.reports.some(r=>r.place==='campus') },
 ];
-
 const LEVELS = [
-  { min:0,    max:100,   label:'ผู้เริ่มต้น',         icon:'🌱' },
-  { min:100,  max:300,   label:'นักสำรวจ',             icon:'🔍' },
-  { min:300,  max:700,   label:'ผู้พิทักษ์ถนน',        icon:'🛡️' },
-  { min:700,  max:1500,  label:'วีรบุรุษถนน',          icon:'⭐' },
-  { min:1500, max:99999, label:'ตำนานความปลอดภัย',     icon:'🏆' },
+  {min:0,  max:100,  label:'ผู้เริ่มต้น',      icon:'🌱'},
+  {min:100,max:300,  label:'นักสำรวจ',         icon:'🔍'},
+  {min:300,max:700,  label:'ผู้พิทักษ์ถนน',    icon:'🛡️'},
+  {min:700,max:1500, label:'วีรบุรุษถนน',      icon:'⭐'},
+  {min:1500,max:99999,label:'ตำนานความปลอดภัย',icon:'🏆'},
 ];
+const AV_CLR = ['#1b3a6b','#1a7a4a','#b7560a','#c0392b','#7c3aed'];
 
-const AV_COLORS = ['#1b3a6b','#1a7a4a','#b7560a','#c0392b','#7c3aed','#0e7490'];
-
-// ════════════════════════════════════════════════════════
-//  MAP INITIALIZATION
-// ════════════════════════════════════════════════════════
-const map = L.map('map', { zoomControl: false }).setView([16.82, 100.26], 14);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors',
-  maxZoom: 19,
-}).addTo(map);
-
-L.control.zoom({ position: 'topright' }).addTo(map);
-
-map.on('click', e => {
-  setCoordinate(e.latlng.lat, e.latlng.lng);
-  if (!document.getElementById('panel-report').classList.contains('open')) {
-    openReportPanel();
+// ════════════════════════════════════════════════
+// LOGIN LOGIC
+// ════════════════════════════════════════════════
+function onStudentIdInput(inp) {
+  const val = inp.value.replace(/\D/g,'');
+  inp.value = val;
+  const err = document.getElementById('id-error');
+  const det = document.getElementById('faculty-detected');
+  const detTxt = document.getElementById('faculty-detected-text');
+  const sel  = document.getElementById('sel-faculty');
+  inp.classList.remove('error');
+  err.classList.remove('show');
+  det.classList.remove('show');
+  if (val.length === 10) {
+    const code   = val.substring(2,4);
+    const faculty = FACULTY_MAP[code];
+    if (faculty) {
+      detTxt.textContent = 'ตรวจพบ: ' + faculty;
+      det.classList.add('show');
+      // Auto-select faculty dropdown
+      for (let i=0; i<sel.options.length; i++) {
+        if (sel.options[i].value === code) { sel.selectedIndex = i; break; }
+      }
+    }
   }
-});
+}
 
-function buildMarkerIcon(sev) {
-  const c = SEV_COLOR[sev] || '#e67e22';
-  const i = SEV_ICON[sev]  || '⚠️';
-  return L.divIcon({
-    className: '',
-    html: `<div style="width:34px;height:34px;background:${c};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid rgba(255,255,255,0.85);box-shadow:0 3px 12px ${c}55,0 1px 4px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center">
-             <span style="transform:rotate(45deg);font-size:14px;line-height:1">${i}</span>
-           </div>`,
-    iconSize:   [34, 34],
-    iconAnchor: [17, 34],
+function validateStudentId() {
+  const val = document.getElementById('inp-student-id').value;
+  const err = document.getElementById('id-error');
+  if (val.length > 0 && val.length !== 10) {
+    err.textContent = 'รหัสนักศึกษาต้องมี 10 หลัก (ตัวอย่าง: 6812207001)';
+    err.classList.add('show');
+    document.getElementById('inp-student-id').classList.add('error');
+    return false;
+  }
+  return true;
+}
+
+function doLogin() {
+  const sid    = document.getElementById('inp-student-id').value.trim();
+  const facVal = document.getElementById('sel-faculty').value;
+  const name   = document.getElementById('inp-fullname').value.trim();
+  const btn    = document.getElementById('login-btn');
+
+  // Validate
+  let ok = true;
+  const sidErr = document.getElementById('id-error');
+  const facErr = document.getElementById('faculty-error');
+  sidErr.classList.remove('show');
+  facErr.classList.remove('show');
+
+  if (sid.length === 0) {
+    sidErr.textContent = 'กรุณากรอกรหัสนักศึกษา';
+    sidErr.classList.add('show');
+    document.getElementById('inp-student-id').classList.add('error');
+    ok = false;
+  } else if (sid.length !== 10) {
+    sidErr.textContent = 'รหัสนักศึกษาต้องมี 10 หลัก';
+    sidErr.classList.add('show');
+    document.getElementById('inp-student-id').classList.add('error');
+    ok = false;
+  }
+  if (!facVal) {
+    facErr.textContent = 'กรุณาเลือกคณะหรือหน่วยงาน';
+    facErr.classList.add('show');
+    ok = false;
+  }
+  if (!ok) return;
+
+  btn.disabled = true;
+  btn.textContent = 'กำลังเข้าสู่ระบบ...';
+
+  const faculty = FACULTY_MAP[facVal] || document.getElementById('sel-faculty').options[document.getElementById('sel-faculty').selectedIndex].text;
+  APP.user = {
+    studentId:   sid,
+    facultyCode: facVal,
+    faculty:     faculty,
+    name:        name || sid,
+    pts:         0,
+  };
+
+  // Save to localStorage
+  localStorage.setItem('sr_user', JSON.stringify(APP.user));
+
+  setTimeout(() => {
+    document.getElementById('login-screen').classList.add('hide');
+    document.getElementById('app').classList.add('show');
+    initApp();
+    btn.disabled = false;
+    btn.textContent = 'เข้าสู่ระบบ';
+  }, 600);
+}
+
+function doLogout() {
+  localStorage.removeItem('sr_user');
+  APP.user = null;
+  closeAllPanels();
+  document.getElementById('login-screen').classList.remove('hide');
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('inp-student-id').value = '';
+  document.getElementById('sel-faculty').selectedIndex = 0;
+  document.getElementById('inp-fullname').value = '';
+  document.getElementById('faculty-detected').classList.remove('show');
+  document.getElementById('id-error').classList.remove('show');
+  toast('ออกจากระบบเรียบร้อย');
+}
+
+// ════════════════════════════════════════════════
+// MAP INIT
+// ════════════════════════════════════════════════
+let map;
+function initMap() {
+  if (map) return;
+  map = L.map('map', { zoomControl:false }).setView([16.82, 100.26], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap contributors', maxZoom:19
+  }).addTo(map);
+  L.control.zoom({ position:'topright' }).addTo(map);
+  map.on('click', e => {
+    setCoord(e.latlng.lat, e.latlng.lng);
+    if (!document.getElementById('panel-report').classList.contains('open')) openReportPanel();
   });
 }
 
-function buildPopupHtml(r) {
-  const c     = SEV_COLOR[r.sev] || '#e67e22';
-  const tags  = [
-    ...(r.vehicles||[]).map(v => VEH_LABEL[v]||v),
-    ...(r.causes||[]).slice(0,2).map(v => CAUSE_LABEL[v]||v),
-  ].filter(Boolean).slice(0,5);
+function mkIcon(sev) {
+  const c = SEV_COLOR[sev] || '#e67e22';
+  const i = SEV_ICON[sev]  || '⚠️';
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:34px;height:34px;background:${c};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid rgba(255,255,255,.85);box-shadow:0 3px 12px ${c}55;display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:14px;line-height:1">${i}</span></div>`,
+    iconSize:[34,34], iconAnchor:[17,34],
+  });
+}
 
+function mkPopup(r) {
+  const c   = SEV_COLOR[r.sev] || '#e67e22';
+  const tags = [
+    ...(r.vehicles||[]).map(v=>VEH_LABEL[v]||v),
+    ...(r.causes||[]).slice(0,2).map(v=>CAUSE_LABEL[v]||v),
+  ].filter(Boolean).slice(0,4);
   return `<div class="map-popup">
     <div class="mp-header">
-      <div class="mp-sev-bar" style="background:${c};min-height:32px"></div>
+      <div class="mp-sev-bar" style="background:${c};min-height:30px"></div>
       <div>
         <div class="mp-title">${PLACE_LABEL[r.place]||'จุดเสี่ยง'}</div>
         <span class="mp-badge" style="background:${c}18;color:${c}">${SEV_LABEL[r.sev]||r.sev}</span>
       </div>
     </div>
-    ${r.incident?`<div style="font-size:11.5px;color:#3d5168;margin-bottom:5px">รูปแบบ: ${INCIDENT_LABEL[r.incident]||r.incident}</div>`:''}
     ${tags.length?`<div class="mp-tags">${tags.map(t=>`<span class="mp-tag">${t}</span>`).join('')}</div>`:''}
     ${r.desc?`<div class="mp-desc">${r.desc}</div>`:''}
-    <div class="mp-meta">
-      ${r.time_label||''} ${r.weather?'· '+r.weather:''}<br>
-      ผู้รายงาน: ${r.reporter||'ไม่ระบุ'} · ยืนยัน ${r.votes||0} ครั้ง
-    </div>
+    <div class="mp-meta">${r.faculty||''} · ${r.time_label||''} · ยืนยัน ${r.votes||0} ครั้ง</div>
   </div>`;
 }
 
-// ════════════════════════════════════════════════════════
-//  MAP MODES
-// ════════════════════════════════════════════════════════
 function setMapMode(mode) {
   APP.mapMode = mode;
-
-  // Update button states
   ['pin','heat','cluster'].forEach(m => {
     const b = document.getElementById('mb-'+m);
-    if (b) b.classList.toggle('active', m === mode);
+    if(b) b.classList.toggle('active', m===mode);
   });
-
-  // Clear all layers
-  APP.pinLayers.forEach(l => { try { map.removeLayer(l); } catch(e){} });
-  APP.pinLayers = [];
-  if (APP.heatLayer)    { try { map.removeLayer(APP.heatLayer); }    catch(e){} APP.heatLayer = null; }
-  if (APP.clusterGroup) { try { map.removeLayer(APP.clusterGroup); } catch(e){} APP.clusterGroup = null; }
-
-  const valid = APP.reports.filter(r => r.lat && r.lng);
-
-  if (mode === 'pin') {
+  APP.pinLayers.forEach(l=>{try{map.removeLayer(l)}catch(e){}});
+  APP.pinLayers=[];
+  if(APP.heatLayer){try{map.removeLayer(APP.heatLayer)}catch(e){}; APP.heatLayer=null;}
+  if(APP.clusterGroup){try{map.removeLayer(APP.clusterGroup)}catch(e){}; APP.clusterGroup=null;}
+  const valid = APP.reports.filter(r=>r.lat&&r.lng);
+  if (mode==='pin') {
     valid.forEach(r => {
-      const m = L.marker([+r.lat, +r.lng], { icon: buildMarkerIcon(r.sev) }).addTo(map);
-      m.bindPopup(buildPopupHtml(r), { className:'', maxWidth:290 });
-      APP.pinLayers.push(m);
+      const m = L.marker([+r.lat,+r.lng],{icon:mkIcon(r.sev)}).addTo(map);
+      m.bindPopup(mkPopup(r),{maxWidth:290}); APP.pinLayers.push(m);
     });
-
-  } else if (mode === 'heat') {
-    const weight = { accident:1.0, frequent:0.65, near:0.4, observe:0.25 };
-    const pts = valid.map(r => [+r.lat, +r.lng, weight[r.sev]||0.3]);
-    if (pts.length) {
-      APP.heatLayer = L.heatLayer(pts, {
-        radius: 38, blur: 28, maxZoom: 16,
-        gradient: { 0.2:'#27ae60', 0.5:'#e67e22', 0.8:'#c0392b', 1.0:'#7f1d1d' },
-      }).addTo(map);
-    }
-
-  } else if (mode === 'cluster') {
-    APP.clusterGroup = L.markerClusterGroup({
-      chunkedLoading: true,
-      iconCreateFunction: cluster => {
-        const n = cluster.getChildCount();
-        return L.divIcon({
-          html: `<div style="width:40px;height:40px;background:var(--navy);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;color:white;box-shadow:0 2px 10px rgba(27,58,107,0.3);border:2.5px solid rgba(255,255,255,0.8)">${n}</div>`,
-          className: '', iconSize: [40, 40],
-        });
-      },
-    });
-    valid.forEach(r => {
-      const m = L.marker([+r.lat, +r.lng], { icon: buildMarkerIcon(r.sev) });
-      m.bindPopup(buildPopupHtml(r), { maxWidth:290 });
-      APP.clusterGroup.addLayer(m);
-    });
+  } else if (mode==='heat') {
+    const wt={accident:1.0,frequent:.65,near:.4,observe:.25};
+    const pts=valid.map(r=>[+r.lat,+r.lng,wt[r.sev]||.3]);
+    if(pts.length) APP.heatLayer=L.heatLayer(pts,{radius:38,blur:28,maxZoom:16,gradient:{0.2:'#27ae60',0.5:'#e67e22',0.8:'#c0392b',1.0:'#7f1d1d'}}).addTo(map);
+  } else {
+    APP.clusterGroup=L.markerClusterGroup({iconCreateFunction:cl=>{
+      return L.divIcon({html:`<div style="width:40px;height:40px;background:#1b3a6b;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700;color:white;box-shadow:0 2px 10px rgba(27,58,107,.3);border:2.5px solid rgba(255,255,255,.8)">${cl.getChildCount()}</div>`,className:'',iconSize:[40,40]});
+    }});
+    valid.forEach(r=>{const m=L.marker([+r.lat,+r.lng],{icon:mkIcon(r.sev)});m.bindPopup(mkPopup(r),{maxWidth:290});APP.clusterGroup.addLayer(m);});
     map.addLayer(APP.clusterGroup);
   }
 }
 
-// ════════════════════════════════════════════════════════
-//  GPS
-// ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// GPS
+// ════════════════════════════════════════════════
 function getGPS() {
   const btn = document.getElementById('gps-btn');
-  btn.classList.add('loading');
-  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite">
-    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-  </svg> กำลังระบุตำแหน่ง...`;
+  btn.classList.add('loading'); btn.textContent='กำลังระบุ...';
+  if (!navigator.geolocation) { resetGpsBtn(); toast('ไม่รองรับ GPS','err'); return; }
+  navigator.geolocation.getCurrentPosition(p=>{
+    setCoord(p.coords.latitude, p.coords.longitude);
+    map.flyTo([p.coords.latitude,p.coords.longitude],17,{duration:1.2});
+    btn.classList.remove('loading'); btn.textContent='✓ ได้ตำแหน่งแล้ว';
+    toast('ระบุตำแหน่ง GPS สำเร็จ','ok');
+  }, ()=>{ resetGpsBtn(); toast('ไม่สามารถระบุตำแหน่งได้','err'); }, {enableHighAccuracy:true,timeout:12000});
+}
+function resetGpsBtn(){const b=document.getElementById('gps-btn');b.classList.remove('loading');b.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg> ระบุตำแหน่ง GPS';}
+function doGPS(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>map.flyTo([p.coords.latitude,p.coords.longitude],17));}
+function setCoord(lat,lng){
+  APP.lat=lat;APP.lng=lng;
+  const box=document.getElementById('coord-box');const txt=document.getElementById('coord-txt');
+  if(box)box.classList.add('set'); if(txt)txt.textContent=`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  if(APP.tempMarker)map.removeLayer(APP.tempMarker);
+  APP.tempMarker=L.circleMarker([lat,lng],{radius:8,fillColor:'#1b3a6b',fillOpacity:.35,color:'#1b3a6b',weight:2}).addTo(map);
+}
 
-  if (!navigator.geolocation) {
-    resetGPSBtn();
-    toast('เบราว์เซอร์นี้ไม่รองรับ GPS', 'error');
-    return;
+// ════════════════════════════════════════════════
+// FORM SELECTION
+// ════════════════════════════════════════════════
+function selEventType(el){
+  document.querySelectorAll('.event-opt').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); APP.form.sev=el.dataset.sev;
+  const inj=document.getElementById('injury-sub');
+  inj.classList.toggle('show', APP.form.sev==='accident');
+  if(APP.form.sev!=='accident') delete APP.form.injury;
+}
+function selSingle(el,f){
+  document.querySelectorAll(`[data-f="${f}"]`).forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); APP.form[f]=el.dataset.v;
+}
+function selMulti(el,f){
+  el.classList.toggle('sel');
+  if(!Array.isArray(APP.form[f]))APP.form[f]=[];
+  const v=el.dataset.v;
+  if(el.classList.contains('sel')){if(!APP.form[f].includes(v))APP.form[f].push(v);}
+  else APP.form[f]=APP.form[f].filter(x=>x!==v);
+}
+
+// ════════════════════════════════════════════════
+// WIZARD NAV
+// ════════════════════════════════════════════════
+function wizNext(){
+  const v=APP.form;
+  if(APP.step===1){
+    if(!v.sev) return toast('กรุณาเลือกประเภทเหตุการณ์','err');
+    if(v.sev==='accident'&&!v.injury) return toast('กรุณาระบุระดับความรุนแรง','err');
   }
-
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      setCoordinate(pos.coords.latitude, pos.coords.longitude);
-      map.flyTo([pos.coords.latitude, pos.coords.longitude], 17, { duration: 1.2 });
-      btn.classList.remove('loading');
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ได้ตำแหน่งแล้ว`;
-      toast('ระบุตำแหน่ง GPS สำเร็จ', 'success');
-    },
-    () => { resetGPSBtn(); toast('ไม่สามารถระบุตำแหน่งได้ กรุณาแตะบนแผนที่', 'error'); },
-    { enableHighAccuracy: true, timeout: 12000 }
-  );
-}
-
-function resetGPSBtn() {
-  const btn = document.getElementById('gps-btn');
-  btn.classList.remove('loading');
-  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
-    <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
-    <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
-  </svg> ระบุตำแหน่ง GPS`;
-}
-
-function doGPS() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(
-    p => map.flyTo([p.coords.latitude, p.coords.longitude], 17, { duration: 1 }),
-    () => toast('ไม่สามารถระบุตำแหน่งได้', 'error')
-  );
-}
-
-function setCoordinate(lat, lng) {
-  APP.lat = lat; APP.lng = lng;
-  const disp = document.getElementById('coord-display');
-  const txt  = document.getElementById('coord-text');
-  if (disp) disp.classList.add('set');
-  if (txt)  txt.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-  if (APP.tempMarker) map.removeLayer(APP.tempMarker);
-  APP.tempMarker = L.circleMarker([lat, lng], {
-    radius: 8, fillColor: '#1b3a6b', fillOpacity: 0.35,
-    color: '#1b3a6b', weight: 2,
-  }).addTo(map);
-}
-
-// ════════════════════════════════════════════════════════
-//  FORM FIELD SELECTION
-// ════════════════════════════════════════════════════════
-function selectEventType(el) {
-  document.querySelectorAll('.event-opt').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-  APP.form.sev = el.dataset.sev;
-  const injBox = document.getElementById('injury-section');
-  if (injBox) injBox.classList.toggle('visible', APP.form.sev === 'accident');
-  if (APP.form.sev !== 'accident') delete APP.form.injury;
-}
-
-function selSingle(el, field) {
-  document.querySelectorAll(`[data-f="${field}"]`).forEach(b => {
-    b.classList.remove('selected', 'selected-red');
-  });
-  el.classList.add('selected');
-  APP.form[field] = el.dataset.v;
-}
-
-function selMulti(el, field) {
-  el.classList.toggle('selected');
-  if (!Array.isArray(APP.form[field])) APP.form[field] = [];
-  const v = el.dataset.v;
-  if (el.classList.contains('selected')) {
-    if (!APP.form[field].includes(v)) APP.form[field].push(v);
-  } else {
-    APP.form[field] = APP.form[field].filter(x => x !== v);
+  if(APP.step===2){
+    if(!APP.lat||!APP.lng) return toast('กรุณาระบุตำแหน่งด้วย GPS หรือแตะบนแผนที่','err');
+    if(!v.place) return toast('กรุณาเลือกลักษณะสถานที่','err');
   }
+  if(APP.step===3&&!v.incident) return toast('กรุณาเลือกรูปแบบการเกิดเหตุ','err');
+  if(APP.step===4){
+    if(!v.time_slot) return toast('กรุณาเลือกช่วงเวลา','err');
+    if(!v.weather) return toast('กรุณาเลือกสภาพอากาศ','err');
+  }
+  if(APP.step===TOTAL_STEPS){submitReport();return;}
+  APP.step++; renderWiz();
+}
+function wizBack(){if(APP.step<=1)return;APP.step--;renderWiz();}
+
+function renderWiz(){
+  const step=APP.step;
+  document.querySelectorAll('.step-page').forEach((p,i)=>p.classList.toggle('active',i+1===step));
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    const n=document.getElementById('sn-'+i);
+    n.classList.remove('active','done');
+    if(i<step){n.classList.add('done');n.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';}
+    else if(i===step){n.classList.add('active');n.textContent=i;}
+    else n.textContent=i;
+    if(i<TOTAL_STEPS){const c=document.getElementById('sc-'+i);if(c)c.classList.toggle('done',i<step);}
+  }
+  const lbl=document.getElementById('step-lbl');const ctr=document.getElementById('step-ctr');
+  if(lbl)lbl.textContent=STEP_LABELS[step]||'';
+  if(ctr)ctr.textContent=`${step} / ${TOTAL_STEPS}`;
+  const back=document.getElementById('wf-back');const next=document.getElementById('wf-next');
+  if(back)back.style.display=step>1?'block':'none';
+  if(next){
+    if(step===TOTAL_STEPS){next.textContent='ส่งรายงาน';next.className='wf-next submit';}
+    else{next.textContent='ถัดไป →';next.className='wf-next';}
+  }
+  // Show reporter info on step 5
+  if(step===5){
+    const ri=document.getElementById('rpt-user-info');
+    if(ri&&APP.user) ri.innerHTML=`<strong>${APP.user.name}</strong> · ${APP.user.studentId} · ${APP.user.faculty}`;
+  }
+  document.querySelector('#panel-report .panel-body')?.scrollTo({top:0,behavior:'smooth'});
 }
 
-// ════════════════════════════════════════════════════════
-//  WIZARD NAVIGATION
-// ════════════════════════════════════════════════════════
-function wizardNext() {
-  // Validation per step
-  const v = APP.form;
-  if (APP.step === 1) {
-    if (!v.sev) return toast('กรุณาเลือกประเภทเหตุการณ์', 'error');
-    if (v.sev === 'accident' && !v.injury) return toast('กรุณาระบุระดับความรุนแรงของการบาดเจ็บ', 'error');
-  }
-  if (APP.step === 2) {
-    if (!APP.lat || !APP.lng) return toast('กรุณาระบุตำแหน่งด้วย GPS หรือแตะบนแผนที่', 'error');
-    if (!v.place) return toast('กรุณาเลือกลักษณะของสถานที่', 'error');
-  }
-  if (APP.step === 3) {
-    if (!v.incident) return toast('กรุณาเลือกรูปแบบการเกิดเหตุ', 'error');
-  }
-  if (APP.step === 4) {
-    if (!v.time_slot) return toast('กรุณาเลือกช่วงเวลาที่เกิดเหตุ', 'error');
-    if (!v.weather)   return toast('กรุณาเลือกสภาพอากาศ', 'error');
-  }
-  if (APP.step === TOTAL_STEPS) {
-    submitReport();
-    return;
-  }
-  APP.step++;
-  renderWizardUI();
+// ════════════════════════════════════════════════
+// PHOTO
+// ════════════════════════════════════════════════
+function handlePhoto(e){
+  const files=Array.from(e.target.files).slice(0,3);APP.photos=files;
+  const prev=document.getElementById('photo-prev');if(!prev)return;
+  prev.innerHTML='';
+  files.forEach(f=>{const r=new FileReader();r.onload=ev=>{const img=document.createElement('img');img.src=ev.target.result;img.className='photo-thumb anim-in';prev.appendChild(img);};r.readAsDataURL(f);});
 }
 
-function wizardBack() {
-  if (APP.step <= 1) return;
-  APP.step--;
-  renderWizardUI();
-}
-
-function renderWizardUI() {
-  const step = APP.step;
-
-  // Pages
-  document.querySelectorAll('.step-page').forEach((p, i) => {
-    p.classList.toggle('active', i + 1 === step);
-  });
-
-  // Nodes & connectors
-  for (let i = 1; i <= TOTAL_STEPS; i++) {
-    const node = document.getElementById('sn-' + i);
-    node.classList.remove('active', 'done');
-    if (i < step) {
-      node.classList.add('done');
-      node.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-    } else if (i === step) {
-      node.classList.add('active');
-      node.textContent = i;
-    } else {
-      node.textContent = i;
-    }
-    if (i < TOTAL_STEPS) {
-      const conn = document.getElementById('sc-' + i);
-      if (conn) conn.classList.toggle('done', i < step);
-    }
-  }
-
-  // Labels
-  const lbl = document.getElementById('step-label');
-  const ctr = document.getElementById('step-counter');
-  if (lbl) lbl.textContent = STEP_LABELS[step] || '';
-  if (ctr) ctr.textContent = `${step} / ${TOTAL_STEPS}`;
-
-  // Footer buttons
-  const back = document.getElementById('wf-back');
-  const next = document.getElementById('wf-next');
-  if (back) back.style.display = step > 1 ? 'block' : 'none';
-  if (next) {
-    if (step === TOTAL_STEPS) {
-      next.textContent = 'ส่งรายงาน';
-      next.className = 'wf-next submit';
-    } else {
-      next.textContent = 'ถัดไป →';
-      next.className = 'wf-next';
-    }
-  }
-
-  // Scroll panel body to top
-  const body = document.querySelector('#panel-report .panel-body');
-  if (body) body.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ════════════════════════════════════════════════════════
-//  PHOTO HANDLING
-// ════════════════════════════════════════════════════════
-function handlePhotoUpload(e) {
-  const files = Array.from(e.target.files).slice(0, 3);
-  APP.photos = files;
-  const prev = document.getElementById('photo-previews');
-  if (!prev) return;
-  prev.innerHTML = '';
-  files.forEach(f => {
-    const r = new FileReader();
-    r.onload = ev => {
-      const img = document.createElement('img');
-      img.src = ev.target.result;
-      img.className = 'photo-thumb animate-in';
-      prev.appendChild(img);
-    };
-    r.readAsDataURL(f);
-  });
-}
-
-// ════════════════════════════════════════════════════════
-//  SUBMIT REPORT
-// ════════════════════════════════════════════════════════
-async function submitReport() {
-  const next = document.getElementById('wf-next');
-  next.textContent = 'กำลังบันทึก...';
-  next.classList.add('loading');
-
-  const now    = new Date();
-  const report = {
-    id:            now.getTime().toString(),
-    lat:           APP.lat,
-    lng:           APP.lng,
-    sev:           APP.form.sev,
-    injury:        APP.form.injury        || '',
-    place:         APP.form.place         || '',
-    vehicles:      APP.form.vehicles      || [],
-    incident:      APP.form.incident      || '',
-    causes:        APP.form.causes        || [],
-    groups:        APP.form.groups        || [],
-    infra:         APP.form.infra         || [],
-    time_slot:     APP.form.time_slot     || '',
-    time_label:    TIME_LABEL[APP.form.time_slot] || '',
-    weather:       APP.form.weather       || '',
-    day_type:      APP.form.day_type      || '',
-    desc:          document.getElementById('inp-desc')?.value.trim() || '',
-    reporter:      document.getElementById('inp-name')?.value.trim() || APP.user.name || '',
-    reporter_role: APP.form.reporter_role || '',
-    hasPhoto:      APP.photos.length > 0,
-    votes:         0,
-    status:        'pending',
-    createdAt:     now.toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' }),
-    timestamp:     now.toISOString(),
+// ════════════════════════════════════════════════
+// SUBMIT
+// ════════════════════════════════════════════════
+async function submitReport(){
+  const next=document.getElementById('wf-next');
+  next.textContent='กำลังบันทึก...'; next.classList.add('loading');
+  const now=new Date();
+  const report={
+    id:          now.getTime().toString(),
+    lat:         APP.lat, lng:APP.lng,
+    sev:         APP.form.sev,
+    injury:      APP.form.injury||'',
+    place:       APP.form.place||'',
+    vehicles:    APP.form.vehicles||[],
+    incident:    APP.form.incident||'',
+    causes:      APP.form.causes||[],
+    groups:      APP.form.groups||[],
+    infra:       APP.form.infra||[],
+    time_slot:   APP.form.time_slot||'',
+    time_label:  TIME_LABEL[APP.form.time_slot]||'',
+    weather:     APP.form.weather||'',
+    day_type:    APP.form.day_type||'',
+    desc:        document.getElementById('inp-desc')?.value.trim()||'',
+    studentId:   APP.user?.studentId||'',
+    reporter:    APP.user?.name||'',
+    faculty:     APP.user?.faculty||'',
+    facultyCode: APP.user?.facultyCode||'',
+    hasPhoto:    APP.photos.length>0,
+    votes:0, status:'pending',
+    createdAt:   now.toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}),
+    timestamp:   now.toISOString(),
   };
-
-  APP.reports.push(report);
-  saveLocal();
-
-  // Update map
+  APP.reports.push(report); saveLocal();
   setMapMode(APP.mapMode);
-
-  // Points
-  let pts = 10;
-  if (report.sev === 'near')   pts += 10;
-  if (APP.photos.length > 0)   pts += 5;
-  addPoints(pts);
-  checkBadges();
-
-  // Sync to GAS (non-blocking)
-  sendToGAS(report);
-
-  // UI reset
+  let pts=10;
+  if(report.sev==='near')pts+=10;
+  if(APP.photos.length>0)pts+=5;
+  addPoints(pts); checkBadges();
+  sendGAS(report);
   resetForm();
-  next.textContent = 'ส่งรายงาน';
-  next.classList.remove('loading');
-
-  updateStats();
-  renderList();
-  renderLeaderboard();
-
-  toast(`บันทึกรายงานสำเร็จ — ได้รับ ${pts} คะแนน`, 'success');
-  setTimeout(closeAllPanels, 1200);
+  next.textContent='ส่งรายงาน'; next.classList.remove('loading');
+  updateStats(); renderList(); renderLB();
+  toast(`บันทึกสำเร็จ — ได้รับ ${pts} คะแนน`,'ok');
+  setTimeout(closeAllPanels,1200);
 }
 
-async function sendToGAS(report) {
-  if (!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') return;
-  try {
-    const fd = new FormData();
-    fd.append('action', 'addReport');
-    fd.append('data', JSON.stringify(report));
-    await fetch(GAS_URL, { method: 'POST', body: fd });
-  } catch(e) { /* silent fail — data already saved locally */ }
+async function sendGAS(r){
+  if(!GAS_URL||GAS_URL==='YOUR_GAS_URL_HERE')return;
+  try{
+    const fd=new FormData(); fd.append('action','addReport'); fd.append('data',JSON.stringify(r));
+    await fetch(GAS_URL,{method:'POST',body:fd});
+  }catch(e){}
 }
 
-function resetForm() {
-  APP.form = {}; APP.step = 1;
-  APP.photos = []; APP.lat = null; APP.lng = null;
-
-  // Clear selections
-  document.querySelectorAll('.event-opt,.opt-card,.pill-opt').forEach(b => {
-    b.classList.remove('selected', 'selected-red');
-  });
-
-  // Clear injury section
-  const injBox = document.getElementById('injury-section');
-  if (injBox) injBox.classList.remove('visible');
-
-  // Clear inputs
-  const desc = document.getElementById('inp-desc');
-  const name = document.getElementById('inp-name');
-  if (desc) desc.value = '';
-  if (name) name.value = '';
-
-  // Clear coord display
-  const disp = document.getElementById('coord-display');
-  const txt  = document.getElementById('coord-text');
-  if (disp) disp.classList.remove('set');
-  if (txt)  txt.textContent = 'ยังไม่ได้ระบุตำแหน่ง';
-
-  // Clear photos
-  const prev = document.getElementById('photo-previews');
-  if (prev) prev.innerHTML = '';
-
-  // Remove temp marker
-  if (APP.tempMarker) { map.removeLayer(APP.tempMarker); APP.tempMarker = null; }
-
-  // Reset GPS button
-  resetGPSBtn();
-
-  renderWizardUI();
+function resetForm(){
+  APP.form={};APP.step=1;APP.photos=[];APP.lat=null;APP.lng=null;
+  document.querySelectorAll('.event-opt,.opt-card,.pill-opt').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('injury-sub').classList.remove('show');
+  const desc=document.getElementById('inp-desc'); if(desc)desc.value='';
+  const coord=document.getElementById('coord-box'); if(coord)coord.classList.remove('set');
+  const ctxt=document.getElementById('coord-txt'); if(ctxt)ctxt.textContent='ยังไม่ได้ระบุตำแหน่ง';
+  const pprev=document.getElementById('photo-prev'); if(pprev)pprev.innerHTML='';
+  if(APP.tempMarker){map.removeLayer(APP.tempMarker);APP.tempMarker=null;}
+  resetGpsBtn(); renderWiz();
 }
 
-// ════════════════════════════════════════════════════════
-//  VOTE
-// ════════════════════════════════════════════════════════
-function vote(id, el) {
-  const r = APP.reports.find(x => x.id === id);
-  if (!r || r._voted) { toast('คุณได้ยืนยันรายงานนี้แล้ว', 'error'); return; }
-  r.votes = (r.votes || 0) + 1;
-  r._voted = true;
-  el.classList.add('voted');
-  el.innerHTML = `✓ ยืนยัน ${r.votes}`;
-  if (r.reporter === APP.user.name) addPoints(5);
-  saveLocal();
-  renderList();
-  updateStats();
-  if (GAS_URL && GAS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-    fetch(GAS_URL, { method:'POST', body: new URLSearchParams({ action:'vote', id }) }).catch(()=>{});
-  }
+// ════════════════════════════════════════════════
+// VOTE
+// ════════════════════════════════════════════════
+function vote(id,el){
+  const r=APP.reports.find(x=>x.id===id);
+  if(!r||r._voted){toast('คุณยืนยันรายงานนี้แล้ว','err');return;}
+  r.votes=(r.votes||0)+1; r._voted=true;
+  el.classList.add('voted'); el.textContent=`✓ ยืนยัน ${r.votes}`;
+  if(r.studentId===APP.user?.studentId)addPoints(5);
+  saveLocal(); renderList(); updateStats();
 }
 
-// ════════════════════════════════════════════════════════
-//  LIST RENDERING
-// ════════════════════════════════════════════════════════
-function renderList() {
-  const f    = APP.filter;
-  const rows = f === 'all' ? APP.reports : APP.reports.filter(r => r.sev === f);
-  const body = document.getElementById('list-body');
-  const cnt  = document.getElementById('list-count');
-
-  if (cnt) cnt.textContent = `${rows.length} รายการ`;
-
-  if (!rows.length) {
-    if (body) body.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">ยังไม่มีรายงานในหมวดนี้</div></div>`;
-    return;
-  }
-
-  if (!body) return;
-  body.innerHTML = [...rows].reverse().map(r => {
-    const c    = SEV_COLOR[r.sev] || '#e67e22';
-    const tags = [
-      PLACE_LABEL[r.place]||'',
-      ...(r.vehicles||[]).slice(0,2).map(v => VEH_LABEL[v]||v),
-      ...(r.causes||[]).slice(0,2).map(v => CAUSE_LABEL[v]||v),
-    ].filter(Boolean);
-
-    return `<div class="report-card animate-in" onclick="flyToCard(${r.lat},${r.lng})">
-      <div class="rc-severity-bar" style="background:${c}"></div>
+// ════════════════════════════════════════════════
+// LIST
+// ════════════════════════════════════════════════
+function renderList(){
+  const f=APP.filter;
+  const rows=f==='all'?APP.reports:APP.reports.filter(r=>r.sev===f);
+  const body=document.getElementById('list-body');
+  const cnt=document.getElementById('list-count');
+  if(cnt)cnt.textContent=rows.length;
+  if(!rows.length){if(body)body.innerHTML='<div class="empty-state"><div class="empty-ico">📋</div><div class="empty-txt">ยังไม่มีรายงานในหมวดนี้</div></div>';return;}
+  if(!body)return;
+  body.innerHTML=[...rows].reverse().map(r=>{
+    const c=SEV_COLOR[r.sev]||'#e67e22';
+    const tags=[PLACE_LABEL[r.place]||'',...(r.vehicles||[]).slice(0,2).map(v=>VEH_LABEL[v]||v),...(r.causes||[]).slice(0,1).map(v=>CAUSE_LABEL[v]||v)].filter(Boolean);
+    return `<div class="rcard anim-in" onclick="flyCard(${r.lat},${r.lng})">
+      <div class="rc-bar" style="background:${c}"></div>
       <div class="rc-body">
         <div class="rc-top">
-          <div class="rc-type-label">${SEV_ICON[r.sev]} ${PLACE_LABEL[r.place]||'จุดเสี่ยง'}</div>
-          <span class="rc-sev-badge" style="background:${c}15;color:${c}">${SEV_LABEL[r.sev]||r.sev}</span>
+          <div class="rc-type">${SEV_ICON[r.sev]} ${PLACE_LABEL[r.place]||'จุดเสี่ยง'}</div>
+          <span class="rc-sev" style="background:${c}15;color:${c}">${SEV_LABEL[r.sev]||r.sev}</span>
         </div>
-        ${tags.length ? `<div class="rc-tags">${tags.map(t=>`<span class="rc-tag">${t}</span>`).join('')}</div>` : ''}
-        <div class="rc-desc">${r.desc || (INCIDENT_LABEL[r.incident]||'') || 'ไม่มีคำอธิบายเพิ่มเติม'}</div>
-        <div class="rc-footer">
-          <span>${r.time_label||''}${r.weather?' · '+r.weather:''}</span>
-          <span>${r.reporter||'ไม่ระบุชื่อ'}</span>
-          <button class="rc-vote-btn ${r._voted?'voted':''}" onclick="event.stopPropagation();vote('${r.id}',this)">
-            ${r._voted ? `✓ ยืนยัน ${r.votes||1}` : `ยืนยัน ${r.votes||0}`}
-          </button>
+        ${tags.length?`<div class="rc-tags">${tags.map(t=>`<span class="rc-tag">${t}</span>`).join('')}</div>`:''}
+        <div class="rc-desc">${r.desc||(INCIDENT_LABEL[r.incident]||'')||'ไม่มีคำอธิบายเพิ่มเติม'}</div>
+        <div class="rc-foot">
+          <span>${r.faculty||''}</span><span>${r.time_label||''}</span>
+          <button class="rc-vote ${r._voted?'voted':''}" onclick="event.stopPropagation();vote('${r.id}',this)">${r._voted?`✓ ยืนยัน ${r.votes||1}`:`ยืนยัน ${r.votes||0}`}</button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
-function filterList(f, el) {
-  APP.filter = f;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderList();
+function filterList(f,el){
+  APP.filter=f;
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); renderList();
+}
+function flyCard(lat,lng){showView('map');setTimeout(()=>map.flyTo([lat,lng],17,{duration:1}),100);}
+
+// ════════════════════════════════════════════════
+// STATS
+// ════════════════════════════════════════════════
+function updateStats(){
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
+  set('h-a',APP.reports.filter(r=>r.sev==='accident').length);
+  set('h-f',APP.reports.filter(r=>r.sev==='frequent').length);
+  set('h-n',APP.reports.filter(r=>r.sev==='near').length);
+  set('rank-total',APP.reports.length);
 }
 
-function flyToCard(lat, lng) {
-  showView('map');
-  setTimeout(() => map.flyTo([lat, lng], 17, { duration: 1 }), 100);
+// ════════════════════════════════════════════════
+// GAMIFICATION
+// ════════════════════════════════════════════════
+function addPoints(n){
+  if(!APP.user)return;
+  APP.user.pts=(APP.user.pts||0)+n;
+  saveUser(); updateUserUI();
 }
-
-// ════════════════════════════════════════════════════════
-//  STATS BAR
-// ════════════════════════════════════════════════════════
-function updateStats() {
-  const a = APP.reports.filter(r => r.sev === 'accident').length;
-  const f = APP.reports.filter(r => r.sev === 'frequent').length;
-  const n = APP.reports.filter(r => r.sev === 'near').length;
-  const el_a = document.getElementById('h-accident');
-  const el_f = document.getElementById('h-frequent');
-  const el_n = document.getElementById('h-near');
-  if (el_a) el_a.textContent = a;
-  if (el_f) el_f.textContent = f;
-  if (el_n) el_n.textContent = n;
-  const rt = document.getElementById('rank-total');
-  if (rt) rt.textContent = APP.reports.length;
+function updateUserUI(){
+  if(!APP.user)return;
+  const u=APP.user; const pts=u.pts||0;
+  const lv=LEVELS.find(l=>pts>=l.min&&pts<l.max)||LEVELS[LEVELS.length-1];
+  const pct=Math.min(100,((pts-lv.min)/(lv.max-lv.min))*100);
+  const next=LEVELS[LEVELS.indexOf(lv)+1];
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v};
+  const av=document.getElementById('hdr-av');
+  if(av)av.textContent=(u.name||'?')[0].toUpperCase();
+  const hn=document.getElementById('hdr-name');if(hn)hn.textContent=u.name||u.studentId;
+  const hp=document.getElementById('hdr-pts');if(hp)hp.textContent=`${pts} คะแนน`;
+  set('prof-name',u.name||u.studentId);
+  set('prof-code',u.studentId);
+  set('prof-faculty',u.faculty);
+  set('prof-level',`ระดับ: ${lv.label} ${lv.icon}`);
+  set('prof-pts',pts);
+  set('prof-reps',APP.reports.filter(r=>r.studentId===u.studentId).length);
+  set('prof-votes',APP.reports.reduce((a,r)=>a+(r.votes||0),0));
+  const xf=document.getElementById('xp-fill');if(xf)xf.style.width=pct+'%';
+  set('xp-lbl',`${pts-lv.min} / ${lv.max-lv.min} XP → ${next?next.label:'ระดับสูงสุด'}`);
 }
-
-// ════════════════════════════════════════════════════════
-//  GAMIFICATION
-// ════════════════════════════════════════════════════════
-function addPoints(n) {
-  APP.user.pts = (APP.user.pts || 0) + n;
-  saveUser();
-  updateUserUI();
-}
-
-function updateUserUI() {
-  const pts  = APP.user.pts;
-  const lv   = LEVELS.find(l => pts >= l.min && pts < l.max) || LEVELS[LEVELS.length-1];
-  const pct  = Math.min(100, ((pts - lv.min) / (lv.max - lv.min)) * 100);
-  const next = LEVELS[LEVELS.indexOf(lv)+1];
-
-  const avatar  = document.getElementById('hdr-avatar');
-  const hdrPts  = document.getElementById('hdr-pts');
-  const profN   = document.getElementById('prof-name');
-  const profLv  = document.getElementById('prof-level');
-  const profPts = document.getElementById('prof-pts');
-  const profRep = document.getElementById('prof-reps');
-  const profVot = document.getElementById('prof-votes-recv');
-  const xpFill  = document.getElementById('xp-fill');
-  const xpLabel = document.getElementById('xp-label');
-
-  const name = APP.user.name || 'ผู้ใช้งาน';
-  if (avatar) avatar.textContent = name[0].toUpperCase();
-  if (hdrPts) hdrPts.textContent = `${pts} คะแนน`;
-
-  if (profN)   profN.textContent  = name;
-  if (profLv)  profLv.textContent = `ระดับ: ${lv.label} ${lv.icon}`;
-  if (profPts) profPts.textContent = pts;
-  if (profRep) profRep.textContent = APP.reports.length;
-  if (profVot) profVot.textContent = APP.reports.reduce((a,r)=>a+(r.votes||0),0);
-  if (xpFill)  xpFill.style.width  = pct + '%';
-  if (xpLabel) xpLabel.textContent = `${pts - lv.min} / ${lv.max - lv.min} XP → ${next ? next.label : 'ระดับสูงสุด'}`;
-}
-
-function checkBadges() {
-  const earned = JSON.parse(localStorage.getItem('sr_badges') || '[]');
-  let changed = false;
-  BADGE_DEFS.forEach(b => {
-    if (!earned.includes(b.id) && b.req(APP.reports.length)) {
-      earned.push(b.id);
-      changed = true;
-      setTimeout(() => toast(`ได้รับเหรียญรางวัล: ${b.icon} ${b.name}`, 'success'), 700);
+function checkBadges(){
+  const earned=JSON.parse(localStorage.getItem('sr_badges')||'[]');
+  let changed=false;
+  BADGE_DEFS.forEach(b=>{
+    if(!earned.includes(b.id)&&b.req(APP.reports.length)){
+      earned.push(b.id);changed=true;
+      setTimeout(()=>toast(`ได้รับเหรียญ: ${b.icon} ${b.name}`,'ok'),700);
     }
   });
-  if (changed) localStorage.setItem('sr_badges', JSON.stringify(earned));
+  if(changed)localStorage.setItem('sr_badges',JSON.stringify(earned));
   renderBadges(earned);
 }
-
-function renderBadges(earned) {
-  const g = document.getElementById('badge-grid');
-  if (!g) return;
-  g.innerHTML = BADGE_DEFS.map(b => `
-    <div class="badge-card ${earned.includes(b.id) ? 'earned' : 'locked'}">
-      <span class="badge-card-icon">${b.icon}</span>
-      <div class="badge-card-name">${b.name}</div>
-    </div>`).join('');
+function renderBadges(earned){
+  const g=document.getElementById('badge-grid');if(!g)return;
+  g.innerHTML=BADGE_DEFS.map(b=>`<div class="badge-card ${earned.includes(b.id)?'earned':'locked'}"><span class="badge-icon">${b.icon}</span><div class="badge-name">${b.name}</div></div>`).join('');
 }
-
-function saveName() {
-  const n = document.getElementById('edit-name')?.value.trim();
-  if (!n) return toast('กรุณาใส่ชื่อ', 'error');
-  APP.user.name = n;
-  saveUser();
-  updateUserUI();
-  toast('บันทึกชื่อเรียบร้อยแล้ว', 'success');
-}
-
-// ════════════════════════════════════════════════════════
-//  LEADERBOARD
-// ════════════════════════════════════════════════════════
-function renderLeaderboard() {
-  const byName = {};
-  APP.reports.forEach(r => {
-    const k = r.reporter || 'ไม่ระบุชื่อ';
-    if (!byName[k]) byName[k] = { name:k, role:r.reporter_role||'', pts:0, cnt:0 };
-    byName[k].pts += 10 + (r.sev==='near'?10:0) + (r.hasPhoto?5:0);
-    byName[k].cnt++;
+function renderLB(){
+  const byId={};
+  APP.reports.forEach(r=>{
+    const k=r.studentId||r.reporter||'ไม่ระบุ';
+    if(!byId[k])byId[k]={name:r.reporter||r.studentId||'ไม่ระบุ',faculty:r.faculty||'',pts:0,cnt:0};
+    byId[k].pts+=10+(r.sev==='near'?10:0)+(r.hasPhoto?5:0);
+    byId[k].cnt++;
   });
-  const sorted = Object.values(byName).sort((a,b) => b.pts - a.pts);
-  const body   = document.getElementById('lb-body');
-  if (!body) return;
-
-  if (!sorted.length) {
-    body.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-text">ยังไม่มีผู้รายงาน</div></div>`;
-    return;
-  }
-
-  const medals = ['🥇','🥈','🥉'];
-  body.innerHTML = sorted.map((u, i) => `
-    <div class="lb-card">
-      <div class="lb-rank">${medals[i] || (i+1)}</div>
-      <div class="lb-avatar" style="background:${AV_COLORS[i % AV_COLORS.length]}">${u.name[0].toUpperCase()}</div>
-      <div class="lb-info">
-        <div class="lb-name">${u.name}</div>
-        <div class="lb-sub">${u.role||'ผู้ใช้งาน'} · ${u.cnt} รายงาน</div>
-      </div>
-      <div class="lb-pts">${u.pts}</div>
-    </div>`).join('');
+  const sorted=Object.values(byId).sort((a,b)=>b.pts-a.pts);
+  const body=document.getElementById('lb-body');if(!body)return;
+  if(!sorted.length){body.innerHTML='<div class="empty-state"><div class="empty-ico">🏆</div><div class="empty-txt">ยังไม่มีผู้รายงาน</div></div>';return;}
+  const medals=['🥇','🥈','🥉'];
+  body.innerHTML=sorted.map((u,i)=>`<div class="lb-card">
+    <div class="lb-rank">${medals[i]||(i+1)}</div>
+    <div class="lb-av" style="background:${AV_CLR[i%AV_CLR.length]}">${u.name[0].toUpperCase()}</div>
+    <div class="lb-info"><div class="lb-name">${u.name}</div><div class="lb-sub">${u.faculty} · ${u.cnt} รายงาน</div></div>
+    <div class="lb-pts">${u.pts}</div>
+  </div>`).join('');
 }
 
-// ════════════════════════════════════════════════════════
-//  LOCAL STORAGE
-// ════════════════════════════════════════════════════════
-function saveLocal() { localStorage.setItem('sr_v4_reports', JSON.stringify(APP.reports)); }
-function saveUser()  { localStorage.setItem('sr_v4_user',    JSON.stringify(APP.user)); }
-
-function loadLocal() {
-  const r = localStorage.getItem('sr_v4_reports');
-  if (r) APP.reports = JSON.parse(r);
-  const u = localStorage.getItem('sr_v4_user');
-  if (u) Object.assign(APP.user, JSON.parse(u));
-  const n = document.getElementById('edit-name');
-  if (n) n.value = APP.user.name || '';
+// ════════════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════════════
+function saveLocal(){localStorage.setItem('sr_v5_reports',JSON.stringify(APP.reports));}
+function saveUser(){if(APP.user)localStorage.setItem('sr_user',JSON.stringify(APP.user));}
+function loadLocal(){
+  const r=localStorage.getItem('sr_v5_reports');if(r)APP.reports=JSON.parse(r);
+  const u=localStorage.getItem('sr_user');if(u)APP.user=JSON.parse(u);
 }
 
-// ════════════════════════════════════════════════════════
-//  PANEL & VIEW NAVIGATION
-// ════════════════════════════════════════════════════════
-function openReportPanel() {
+// ════════════════════════════════════════════════
+// PANEL & VIEW
+// ════════════════════════════════════════════════
+function openReportPanel(){
   closeAllPanels();
   document.getElementById('panel-report').classList.add('open');
   document.getElementById('overlay').classList.add('open');
-  document.getElementById('wizard-footer').classList.add('active');
+  document.getElementById('wiz-footer').classList.add('active');
 }
-
-function openPanel(name) {
+function openPanel(name){
   closeAllPanels();
-  const p = document.getElementById('panel-' + name);
-  if (p) p.classList.add('open');
+  const p=document.getElementById('panel-'+name);if(p)p.classList.add('open');
   document.getElementById('overlay').classList.add('open');
 }
-
-function closeAllPanels() {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+function closeAllPanels(){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('open'));
   document.getElementById('overlay').classList.remove('open');
-  document.getElementById('wizard-footer').classList.remove('active');
+  document.getElementById('wiz-footer').classList.remove('active');
+}
+function showView(name,el){
+  ['list','rank'].forEach(v=>{const fv=document.getElementById('fv-'+v);if(fv)fv.classList.toggle('open',v===name);});
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  if(el&&el.classList.contains('nav-item'))el.classList.add('active');
+  else{const ids={map:'ni-map',list:'ni-list',rank:'ni-rank'};const ni=document.getElementById(ids[name]);if(ni)ni.classList.add('active');}
+  if(name==='list')renderList();
+  if(name==='rank')renderLB();
 }
 
-function showView(name, el) {
-  const views = ['list','rank'];
-  views.forEach(v => {
-    const fv = document.getElementById('fv-' + v);
-    if (fv) fv.classList.toggle('open', v === name);
-  });
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  if (el && el.classList.contains('nav-item')) {
-    el.classList.add('active');
-  } else {
-    const map_ids = { map:'ni-map', list:'ni-list', rank:'ni-rank' };
-    const ni = document.getElementById(map_ids[name]);
-    if (ni) ni.classList.add('active');
-  }
-  if (name === 'list') renderList();
-  if (name === 'rank') renderLeaderboard();
-}
-
-// ════════════════════════════════════════════════════════
-//  TOAST
-// ════════════════════════════════════════════════════════
-function toast(msg, type = '') {
-  const el = document.getElementById('toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.className = 'toast' + (type ? ' ' + type : '');
+// ════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════
+function toast(msg,type=''){
+  const el=document.getElementById('toast');if(!el)return;
+  el.textContent=msg; el.className='toast'+(type?' '+type:'');
   el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 3500);
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3500);
 }
 
-// ════════════════════════════════════════════════════════
-//  DEMO DATA
-// ════════════════════════════════════════════════════════
-function loadDemoData() {
-  const demos = [
-    {
-      lat:16.8233, lng:100.2641, sev:'accident', injury:'minor',
-      place:'intersection', vehicles:['motorcycle','car'],
-      incident:'head_on', causes:['speeding','red_light'], groups:['student'],
-      infra:['no_signal'], time_slot:'evening', time_label:'เย็น',
-      weather:'clear', day_type:'weekday',
-      desc:'รถมอเตอร์ไซค์ชนรถยนต์ที่แยก ไม่มีสัญญาณไฟจราจร ผู้ขับขี่บาดเจ็บเล็กน้อย',
-      reporter:'วิทยา ปานทอง', reporter_role:'student', votes:7
-    },
-    {
-      lat:16.8312, lng:100.2714, sev:'frequent', place:'curve',
-      vehicles:['motorcycle'], incident:'fall_slip',
-      causes:['slippery','no_sign'], groups:['student'],
-      infra:['no_sign','faded_marking'], time_slot:'night', time_label:'กลางคืน',
-      weather:'rain', day_type:'weekday',
-      desc:'โค้งอันตราย ถนนลื่นเมื่อฝนตก มีผู้ประสบอุบัติเหตุบ่อยครั้ง ไม่มีป้ายเตือน',
-      reporter:'สมหมาย คำดี', reporter_role:'staff', votes:4
-    },
-    {
-      lat:16.8152, lng:100.2553, sev:'near', place:'crosswalk',
-      vehicles:['car','pedestrian'], incident:'hit_ped',
-      causes:['low_vis','faded_marking'], groups:['elderly','student'],
-      infra:['faded_marking','no_sign'], time_slot:'dawn', time_label:'รุ่งเช้า',
-      weather:'fog', day_type:'weekday',
-      desc:'ทางข้ามคนเดินเส้นจราจรลบ หมอกหนา รถแล่นผ่านโดยไม่หยุด เกือบชนผู้สูงอายุ',
-      reporter:'นภาพร สมใจ', reporter_role:'staff', votes:5
-    },
-    {
-      lat:16.8281, lng:100.2462, sev:'observe', place:'straight',
-      vehicles:['motorcycle'], incident:'run_off',
-      causes:['no_light','road_defect'], groups:['general'],
-      infra:['pothole','no_light'], time_slot:'night', time_label:'กลางคืน',
-      weather:'overcast', day_type:'weekday',
-      desc:'บ่อขนาดใหญ่กลางช่องทางจราจร ไฟถนนดับ มองไม่เห็น เสี่ยงต่อการเกิดอุบัติเหตุมาก',
-      reporter:'ประชา มั่นคง', reporter_role:'public', votes:3
-    },
-    {
-      lat:16.8197, lng:100.2698, sev:'accident', injury:'serious',
-      place:'campus', vehicles:['motorcycle','bicycle'],
-      incident:'side_swipe', causes:['speeding'], groups:['student','disabled'],
-      infra:['no_sign','no_ramp'], time_slot:'morning', time_label:'สาย',
-      weather:'clear', day_type:'weekday',
-      desc:'รถมอเตอร์ไซค์ขับเร็วในเขตมหาวิทยาลัย ชนนักศึกษาที่ขี่จักรยาน บาดเจ็บสาหัส',
-      reporter:'มัลลิกา รักษา', reporter_role:'student', votes:9
-    },
-  ];
 
-  demos.forEach((d, i) => {
-    APP.reports.push({
-      id: 'demo_' + i,
-      ...d,
-      hasPhoto: false,
-      status: i === 0 ? 'verified' : 'pending',
-      createdAt: new Date(Date.now() - i * 86400000).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' }),
-      timestamp: new Date(Date.now() - i * 86400000).toISOString(),
-    });
-  });
-  saveLocal();
-}
-
-// ════════════════════════════════════════════════════════
-//  INITIALIZATION
-// ════════════════════════════════════════════════════════
-function init() {
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+function initApp(){
+  initMap();
   loadLocal();
-  if (APP.reports.length === 0) loadDemoData();
-
-  updateUserUI();
-  updateStats();
-  setMapMode('pin');
-  renderList();
-  renderLeaderboard();
-
-  const badges = JSON.parse(localStorage.getItem('sr_badges') || '[]');
+  if(APP.reports.length===0)addDemoData();
+  updateUserUI(); updateStats();
+  setMapMode('pin'); renderList(); renderLB();
+  const badges=JSON.parse(localStorage.getItem('sr_badges')||'[]');
   renderBadges(badges);
-
-  // Try GAS sync
-  if (GAS_URL && GAS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-    fetch(`${GAS_URL}?action=getReports`)
-      .then(r => r.json())
-      .then(json => {
-        if (!json.data) return;
-        const existing = new Set(APP.reports.map(r => r.id));
-        json.data.forEach(r => {
-          if (!existing.has(r.id)) APP.reports.push(r);
-        });
-        saveLocal();
-        setMapMode(APP.mapMode);
-        updateStats();
-        renderList();
-        renderLeaderboard();
-      })
-      .catch(() => {});
-  }
 }
 
-init();
+// Check if already logged in
+window.addEventListener('DOMContentLoaded',()=>{
+  const saved=localStorage.getItem('sr_user');
+  if(saved){
+    APP.user=JSON.parse(saved);
+    document.getElementById('login-screen').classList.add('hide');
+    document.getElementById('app').classList.add('show');
+    initApp();
+  }
+});
 </script>
 </body>
 </html>
